@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Teste de controles virtuais</title><style>
+body{font:16px system-ui;background:#101116;color:#eee;margin:0;padding:24px}h1{margin-top:0}.notice{color:#f6c66a}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:16px}.pad{background:#20232c;border:1px solid #444;border-radius:16px;padding:16px}.axes{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}.bar{height:8px;background:#444;border-radius:4px;overflow:hidden}.bar i{display:block;height:100%;background:#70a5ff}.buttons{word-break:break-word;color:#9fd3a8}.meta{color:#aaa;font-size:13px}
+</style></head><body><h1>Teste local de controles virtuais</h1>
+<p class="notice">Não envia entrada a jogos. Pressione um botão em cada celular depois de ativar os controles.</p>
+<p id="summary">Aguardando dispositivos…</p><div id="pads" class="grid"></div>
+<script>
+const pads=document.getElementById('pads'),summary=document.getElementById('summary');let last=performance.now(),frames=0,fps=0;
+function draw(){frames++;const now=performance.now();if(now-last>500){fps=Math.round(frames*1000/(now-last));frames=0;last=now}const list=[...navigator.getGamepads()].filter(Boolean);summary.textContent=`Controles detectados: ${list.length} · atualização aproximada: ${fps} Hz`;pads.replaceChildren(...list.map((p,n)=>{const box=document.createElement('section');box.className='pad';const pressed=p.buttons.map((b,i)=>b.pressed||b.value>.05?`${i}:${b.value.toFixed(2)}`:null).filter(Boolean);box.innerHTML=`<h2>Jogador lógico ${n+1}</h2><div class="meta">${p.id.replace(/[<>]/g,'')} · índice ${p.index} · conectado ${p.connected?'sim':'não'} · timestamp ${Math.round(p.timestamp)}</div><h3>Eixos</h3><div class="axes">${p.axes.map((v,i)=>`<div>A${i}: ${v.toFixed(3)}<div class="bar"><i style="width:${(v+1)*50}%"></i></div></div>`).join('')}</div><h3>Botões/gatilhos</h3><div class="buttons">${pressed.join(' · ')||'nenhum'}</div>`;return box}));requestAnimationFrame(draw)}draw();
+</script></body></html>
