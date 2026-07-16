@@ -7,6 +7,9 @@
     "asset": "HIDMaestro-v1.3.17.zip",
     "assetSize": 21457772,
     "sha256": "3a3685fb3325744778198c1fbd773d0cae5902c9aedb42227812187acb9957f0",
+    "coreDllSize": 7295488,
+    "coreDllSha256": "a176bf7457d3b884b6ccc9a10da4d72d9d52df3dbf676df2c7e36ba7b7427a5c",
+    "licenseSha256": "edb0ae8061250bde3ffbda1b62ac63757fbebe452c861c47fa11faddfa506f56",
     "license": "MIT",
     "downloadUrl": "https://github.com/hifihedgehog/HIDMaestro/releases/download/v1.3.17/HIDMaestro-v1.3.17.zip"
   }
