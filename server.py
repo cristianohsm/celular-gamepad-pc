@@ -16,6 +16,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
+from gamepad_protocol import MAX_WEBSOCKET_PAYLOAD, ProtocolError, validate_gamepad_state
+from xinput_bridge import OutputCoordinator
+
 ROOT = Path(__file__).resolve().parent
 STATIC_DIR = ROOT / "static"
 CONFIG_PATH = ROOT / "config.json"
@@ -23,6 +26,12 @@ WS_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "port": 8765,
+    "output_mode": "keyboard",
+    "xinput": {
+        "dead_zone": 0.12,
+        "smoothing": 0.15,
+        "max_update_hz": 60,
+    },
     "players": {
         "1": {
             "snes_up": "UP",
@@ -152,6 +161,18 @@ def load_config(config_path: Path | None = None) -> dict[str, Any]:
     merged = json.loads(json.dumps(DEFAULT_CONFIG))
     if isinstance(user_config.get("port"), int):
         merged["port"] = user_config["port"]
+    if user_config.get("output_mode") in {"keyboard", "xinput"}:
+        merged["output_mode"] = user_config["output_mode"]
+    xinput = user_config.get("xinput")
+    if isinstance(xinput, dict):
+        for field, minimum, maximum in (
+            ("dead_zone", 0.0, 0.5),
+            ("smoothing", 0.0, 0.9),
+            ("max_update_hz", 10, 60),
+        ):
+            value = xinput.get(field)
+            if isinstance(value, (int, float)) and not isinstance(value, bool):
+                merged["xinput"][field] = min(max(value, minimum), maximum)
 
     # Compatibilidade com a v1.2: o antigo bloco "bindings" vira Jogador 1.
     legacy_bindings = user_config.get("bindings")
@@ -411,6 +432,7 @@ CONFIG = load_config()
 PAIRING_PIN = f"{secrets.randbelow(10000):04d}"
 INPUT_MANAGER = InputManager({int(player): bindings for player, bindings in CONFIG["players"].items()})
 PLAYER_SLOTS = PlayerSlots()
+OUTPUT_COORDINATOR = OutputCoordinator(str(CONFIG.get("output_mode", "keyboard")))
 
 
 def websocket_send(sock: socket.socket, payload: dict[str, Any], opcode: int = 0x1) -> None:
@@ -461,6 +483,8 @@ def websocket_recv(sock: socket.socket) -> tuple[int, bytes]:
         length = struct.unpack("!H", recv_exact(sock, 2))[0]
     elif length == 127:
         length = struct.unpack("!Q", recv_exact(sock, 8))[0]
+    if length > MAX_WEBSOCKET_PAYLOAD:
+        raise ValueError("Mensagem WebSocket excede 64 KiB")
     mask_key = recv_exact(sock, 4) if masked else b""
     payload = bytearray(recv_exact(sock, length))
     if masked:
@@ -499,7 +523,16 @@ class GamepadHandler(BaseHTTPRequestHandler):
             return
 
         if self.path == "/status":
-            self.send_json({"ok": True, "service": "celular-gamepad", "version": "1.3", "active_players": PLAYER_SLOTS.active_players(), "time": int(time.time())})
+            self.send_json({
+                "ok": True,
+                "service": "celular-gamepad",
+                "version": "1.4.0-beta.1",
+                "active_players": PLAYER_SLOTS.active_players(),
+                "configured_output_mode": OUTPUT_COORDINATOR.configured_mode,
+                "output_mode": OUTPUT_COORDINATOR.effective_mode,
+                "virtual_controller_ready": OUTPUT_COORDINATOR.effective_mode == "xinput",
+                "time": int(time.time()),
+            })
             return
 
         requested = "index.html" if self.path in {"/", ""} else self.path.lstrip("/").split("?", 1)[0]
@@ -541,6 +574,9 @@ class GamepadHandler(BaseHTTPRequestHandler):
 
         client_id = secrets.token_hex(8)
         authenticated = False
+        assigned_player: int | None = None
+        last_sequence = -1
+        last_state_at = 0.0
         self.close_connection = True
 
         try:
@@ -567,8 +603,8 @@ class GamepadHandler(BaseHTTPRequestHandler):
                         continue
 
                     requested_player = message.get("player", "auto")
-                    player = PLAYER_SLOTS.claim(client_id, requested_player)
-                    if player is None:
+                    assigned_player = PLAYER_SLOTS.claim(client_id, requested_player)
+                    if assigned_player is None:
                         if str(requested_player) in {"1", "2"}:
                             error_message = f"O Jogador {requested_player} já está conectado. Escolha o outro jogador."
                         else:
@@ -576,13 +612,20 @@ class GamepadHandler(BaseHTTPRequestHandler):
                         websocket_send(self.connection, {"type": "auth", "ok": False, "message": error_message})
                         continue
 
-                    INPUT_MANAGER.register_client(client_id, player)
+                    INPUT_MANAGER.register_client(client_id, assigned_player)
                     authenticated = True
-                    websocket_send(self.connection, {"type": "auth", "ok": True, "player": player})
-                    print(f"Jogador {player} conectado: {self.client_address[0]} ({client_id})")
+                    websocket_send(self.connection, {
+                        "type": "auth", "ok": True, "player": assigned_player,
+                        "outputMode": OUTPUT_COORDINATOR.effective_mode,
+                        "configuredOutputMode": OUTPUT_COORDINATOR.configured_mode,
+                        "virtualControllerReady": OUTPUT_COORDINATOR.effective_mode == "xinput",
+                    })
+                    print(f"Jogador {assigned_player} conectado: {self.client_address[0]} ({client_id})")
                     continue
 
                 if message_type == "button":
+                    if OUTPUT_COORDINATOR.effective_mode != "keyboard":
+                        continue
                     button = str(message.get("button", ""))
                     state = message.get("state")
                     try:
@@ -597,13 +640,35 @@ class GamepadHandler(BaseHTTPRequestHandler):
                             self.connection,
                             {"type": "input_error", "message": str(exc)},
                         )
+                elif message_type == "gamepad_state" and assigned_player is not None:
+                    if OUTPUT_COORDINATOR.effective_mode != "xinput":
+                        websocket_send(self.connection, {"type": "error", "message": "Controle virtual não instalado"})
+                        continue
+                    now = time.monotonic()
+                    if now - last_state_at < (1 / 120):
+                        continue
+                    try:
+                        validated = validate_gamepad_state(message, assigned_player, last_sequence)
+                    except ProtocolError as exc:
+                        if str(exc) != "Sequência antiga":
+                            websocket_send(self.connection, {"type": "error", "message": str(exc)})
+                        continue
+                    last_sequence = int(validated["sequence"])
+                    last_state_at = now
+                    if not OUTPUT_COORDINATOR.submit(validated):
+                        websocket_send(self.connection, {"type": "input_error", "message": "Bridge indisponível"})
                 elif message_type == "release_all":
-                    INPUT_MANAGER.release_buttons(client_id)
+                    if OUTPUT_COORDINATOR.effective_mode == "xinput" and assigned_player is not None:
+                        OUTPUT_COORDINATOR.neutralize(assigned_player)
+                    else:
+                        INPUT_MANAGER.release_buttons(client_id)
                 elif message_type == "ping":
                     websocket_send(self.connection, {"type": "pong", "at": int(time.time() * 1000)})
-        except (ConnectionError, ConnectionResetError, BrokenPipeError, OSError):
+        except (ConnectionError, ConnectionResetError, BrokenPipeError, OSError, ValueError):
             pass
         finally:
+            if assigned_player is not None:
+                OUTPUT_COORDINATOR.neutralize(assigned_player)
             INPUT_MANAGER.release_client(client_id)
             released_player = PLAYER_SLOTS.release(client_id)
             if authenticated:
@@ -643,18 +708,25 @@ def find_lan_ips() -> list[str]:
 
 def main() -> None:
     port = int(os.environ.get("GAMEPAD_PORT", CONFIG.get("port", 8765)))
+    OUTPUT_COORDINATOR.start()
     server = ThreadingHTTPServer(("0.0.0.0", port), GamepadHandler)
     server.daemon_threads = True
     lan_ips = find_lan_ips()
 
     print("=" * 62)
-    print(" CELULAR GAMEPAD PARA PC - v1.3 | 2 JOGADORES")
+    print(" CELULAR GAMEPAD PARA PC - v1.4.0-beta.1 | 2 JOGADORES")
     print("=" * 62)
     print("Abra no celular um destes endereços:")
     for lan_ip in lan_ips:
         print(f"  http://{lan_ip}:{port}")
     print(f"PIN de conexão: {PAIRING_PIN}")
     print("Dois celulares podem conectar: escolha Jogador 1 e Jogador 2 em cada tela.")
+    if OUTPUT_COORDINATOR.effective_mode == "xinput":
+        print("Saída: Controle virtual / Jogos de PC (experimental)")
+    elif OUTPUT_COORDINATOR.configured_mode == "xinput":
+        print("Controle virtual não instalado ou indisponível; usando Teclado / Emuladores.")
+    else:
+        print("Saída: Teclado / Emuladores")
     if os.name == "nt":
         print(f"Entrada Win32: OK | INPUT={ctypes.sizeof(INPUT)} bytes | {ctypes.sizeof(ctypes.c_void_p) * 8} bits")
     print("Deixe o celular e o PC na mesma rede Wi-Fi.")
@@ -669,6 +741,7 @@ def main() -> None:
         print("\nEncerrando...")
     finally:
         INPUT_MANAGER.release_all()
+        OUTPUT_COORDINATOR.stop()
         server.server_close()
 
 
