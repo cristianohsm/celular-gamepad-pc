@@ -1,0 +1,13 @@
+{
+  "hidmaestro": {
+    "version": "1.3.17",
+    "tag": "v1.3.17",
+    "repository": "hifihedgehog/HIDMaestro",
+    "commit": "a5fc8b77732e93d1bd8519eb081a6a4c4c9ff283",
+    "asset": "HIDMaestro-v1.3.17.zip",
+    "assetSize": 21457772,
+    "sha256": "3a3685fb3325744778198c1fbd773d0cae5902c9aedb42227812187acb9957f0",
+    "license": "MIT",
+    "downloadUrl": "https://github.com/hifihedgehog/HIDMaestro/releases/download/v1.3.17/HIDMaestro-v1.3.17.zip"
+  }
+}
