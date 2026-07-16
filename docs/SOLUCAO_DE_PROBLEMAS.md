@@ -15,3 +15,11 @@ Execute `DIAGNOSTICO.bat`. Verifique se outro processo usa a porta 8765 e se o r
 ## Teclas ficam pressionadas
 
 A versão atual libera as teclas ao desconectar ou perder foco. Se o processo for encerrado à força, reabra e feche o aplicativo/jogo ou pressione e solte a tecla afetada no teclado físico.
+
+## “Controle virtual não instalado”
+
+O servidor voltou automaticamente ao teclado. Confirme Windows 11 build 26100+, execute `INSTALAR_MODO_CONTROLE_VIRTUAL.bat` com consentimento e depois use `INICIAR_MODO_CONTROLE_VIRTUAL.bat`. Rode `VERIFICAR_CONTROLE_VIRTUAL.bat` para consultar o componente.
+
+## Somente um controle aparece
+
+Feche o jogo, confirme dois jogadores conectados, abra `joy.cpl` e pressione botões nos dois celulares. Reinicie o modo controle virtual antes de reabrir o jogo. Não altere arquivos do jogo.

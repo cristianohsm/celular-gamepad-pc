@@ -4,6 +4,8 @@
 
 Transforme um ou dois celulares em controles para jogos e emuladores no Windows usando o navegador e a rede local. O servidor Python converte os comandos dos celulares em teclas por meio do Win32 `SendInput`.
 
+> A branch experimental `1.4.0-beta.1` adiciona um modo opcional de dois controles virtuais XInput. O modo teclado da v1.3 continua sendo o padrão e o caminho recomendado para emuladores.
+
 ## Destaques
 
 - Um ou dois celulares, com Jogador 1 e Jogador 2 independentes.
@@ -75,9 +77,18 @@ flowchart LR
 
 Use apenas em uma rede local confiável. **Não encaminhe a porta TCP 8765 no roteador e não exponha o programa diretamente na internet.** O PIN temporário reduz conexões acidentais, mas não substitui autenticação adequada para exposição pública. Veja [Segurança da rede local](docs/SEGURANCA_REDE_LOCAL.md) e [SECURITY.md](SECURITY.md).
 
+## Controle virtual experimental
+
+O modo **Controle virtual / Jogos de PC** usa um bridge C# local e HIDMaestro `v1.3.17` fixado por SHA-256 para criar dois dispositivos com perfil Xbox 360/XInput. Não abre porta adicional e mantém cada celular isolado em seu slot.
+
+Requisitos atuais: Windows 11 64 bits build 26100+, consentimento para instalação e UAC. O SDK também exige elevação para criar os dispositivos durante a sessão. Se o bridge estiver ausente ou falhar, o servidor volta de forma controlada ao modo teclado.
+
+Use Modern Dual-Stick para jogos 3D; Retro 16-bit não possui todos os comandos. Consulte [Modo controle virtual](docs/MODO_CONTROLE_VIRTUAL.md), [instalação](docs/HIDMAESTRO_INSTALLATION.md) e [protocolo](docs/XINPUT_PROTOCOL.md). **A compatibilidade com It Takes Two ainda depende de teste manual do usuário.**
+
 ## Limitações
 
-- A saída atual é teclado; não é HID nem XInput e não aparece como controle Xbox.
+- A saída da release estável v1.3 é teclado; não é HID nem XInput e não aparece como controle Xbox.
+- Na release estável v1.3, a saída é somente teclado. O XInput existe apenas nesta evolução experimental.
 - Os analógicos virtuais são convertidos em direções de teclado, sem valores analógicos contínuos.
 - O servidor de entrada é destinado ao Windows; outros sistemas executam somente o modo de teste.
 - Máximo de dois celulares simultâneos.
