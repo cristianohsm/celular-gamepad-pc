@@ -14,13 +14,28 @@ jobs:
       matrix:
         python-version: ["3.10", "3.12"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Compile
-        run: python -m py_compile server.py test_server.py
+        run: python -m py_compile server.py test_server.py gamepad_protocol.py xinput_bridge.py
       - name: Unit tests
         env:
           GAMEPAD_TEST_MODE: "1"
         run: python -m unittest -v
+
+  bridge:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+      - name: Restore pinned HIDMaestro SDK
+        shell: pwsh
+        run: ./scripts/restore_hidmaestro.ps1
+      - name: Build bridge
+        run: dotnet build bridge/PhoneGamepad.Bridge/PhoneGamepad.Bridge.csproj -c Release
+      - name: Test bridge with fake backend
+        run: dotnet run --project bridge/PhoneGamepad.Bridge.Tests/PhoneGamepad.Bridge.Tests.csproj -c Release --no-restore
