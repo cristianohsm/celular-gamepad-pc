@@ -35,7 +35,9 @@ jobs:
       - name: Restore pinned HIDMaestro SDK
         shell: pwsh
         run: ./scripts/restore_hidmaestro.ps1
+      - name: Restore bridge projects
+        run: dotnet restore bridge/PhoneGamepad.Bridge.Tests/PhoneGamepad.Bridge.Tests.csproj
       - name: Build bridge
-        run: dotnet build bridge/PhoneGamepad.Bridge/PhoneGamepad.Bridge.csproj -c Release
+        run: dotnet build bridge/PhoneGamepad.Bridge.Tests/PhoneGamepad.Bridge.Tests.csproj -c Release --no-restore
       - name: Test bridge with fake backend
-        run: dotnet run --project bridge/PhoneGamepad.Bridge.Tests/PhoneGamepad.Bridge.Tests.csproj -c Release --no-restore
+        run: dotnet run --project bridge/PhoneGamepad.Bridge.Tests/PhoneGamepad.Bridge.Tests.csproj -c Release --no-build --no-restore
