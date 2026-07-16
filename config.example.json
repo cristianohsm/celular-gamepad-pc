@@ -1,0 +1,29 @@
+{
+  "port": 8765,
+  "players": {
+    "1": {
+      "snes_up": "UP", "snes_down": "DOWN", "snes_left": "LEFT", "snes_right": "RIGHT",
+      "snes_a": "X", "snes_b": "Z", "snes_x": "S", "snes_y": "A",
+      "snes_l": "Q", "snes_r": "W", "snes_start": "ENTER", "snes_select": "SHIFT",
+      "ps5_dpad_up": "UP", "ps5_dpad_down": "DOWN", "ps5_dpad_left": "LEFT", "ps5_dpad_right": "RIGHT",
+      "ps5_lstick_up": "W", "ps5_lstick_down": "S", "ps5_lstick_left": "A", "ps5_lstick_right": "D",
+      "ps5_rstick_up": "I", "ps5_rstick_down": "K", "ps5_rstick_left": "J", "ps5_rstick_right": "L",
+      "ps5_triangle": "T", "ps5_circle": "X", "ps5_cross": "Z", "ps5_square": "R",
+      "ps5_l1": "Q", "ps5_r1": "E", "ps5_l2": "1", "ps5_r2": "3",
+      "ps5_l3": "C", "ps5_r3": "V", "ps5_create": "SHIFT", "ps5_options": "ENTER",
+      "ps5_touchpad": "SPACE", "ps5_home": "ESC"
+    },
+    "2": {
+      "snes_up": "NUMPAD8", "snes_down": "NUMPAD2", "snes_left": "NUMPAD4", "snes_right": "NUMPAD6",
+      "snes_a": "N", "snes_b": "M", "snes_x": "H", "snes_y": "U",
+      "snes_l": "O", "snes_r": "P", "snes_start": "B", "snes_select": "G",
+      "ps5_dpad_up": "F1", "ps5_dpad_down": "F2", "ps5_dpad_left": "F3", "ps5_dpad_right": "F4",
+      "ps5_lstick_up": "NUMPAD8", "ps5_lstick_down": "NUMPAD2", "ps5_lstick_left": "NUMPAD4", "ps5_lstick_right": "NUMPAD6",
+      "ps5_rstick_up": "F5", "ps5_rstick_down": "F6", "ps5_rstick_left": "F7", "ps5_rstick_right": "F8",
+      "ps5_triangle": "U", "ps5_circle": "N", "ps5_cross": "M", "ps5_square": "O",
+      "ps5_l1": "P", "ps5_r1": "Y", "ps5_l2": "F9", "ps5_r2": "F10",
+      "ps5_l3": "F11", "ps5_r3": "F12", "ps5_create": "B", "ps5_options": "H",
+      "ps5_touchpad": "G", "ps5_home": "NUMPAD0"
+    }
+  }
+}

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#101116">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Celular Gamepad</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div id="rotateHint" class="rotate-hint">
+    <div class="rotate-icon">↻</div>
+    <strong>Gire o celular</strong>
+    <span>Use o controle no modo paisagem.</span>
+  </div>
+
+  <header class="topbar">
+    <div class="brand">CELULAR GAMEPAD</div>
+    <nav class="layout-tabs" aria-label="Escolha do controle">
+      <button class="tab active" data-layout="snes">Retro 16-bit</button>
+      <button class="tab" data-layout="ps5">Modern Dual-Stick</button>
+    </nav>
+    <div id="status" class="status disconnected"><span></span>Desconectado</div>
+  </header>
+
+  <main>
+    <section id="snesLayout" class="controller-view active" aria-label="Layout Retro 16-bit">
+      <div class="snes-shell">
+        <div class="shoulder snes-shoulder left" data-button="snes_l">L</div>
+        <div class="shoulder snes-shoulder right" data-button="snes_r">R</div>
+
+        <div class="snes-dpad dpad">
+          <button class="dpad-up" data-button="snes_up" aria-label="Cima"></button>
+          <button class="dpad-left" data-button="snes_left" aria-label="Esquerda"></button>
+          <div class="dpad-center"></div>
+          <button class="dpad-right" data-button="snes_right" aria-label="Direita"></button>
+          <button class="dpad-down" data-button="snes_down" aria-label="Baixo"></button>
+        </div>
+
+        <div class="snes-center">
+          <div class="retro-label">16-BIT</div>
+          <div class="system-buttons">
+            <button class="pill" data-button="snes_select">SELECT</button>
+            <button class="pill" data-button="snes_start">START</button>
+          </div>
+        </div>
+
+        <div class="snes-face">
+          <button class="round y" data-button="snes_y">Y</button>
+          <button class="round x" data-button="snes_x">X</button>
+          <button class="round b" data-button="snes_b">B</button>
+          <button class="round a" data-button="snes_a">A</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="ps5Layout" class="controller-view" aria-label="Layout Modern Dual-Stick">
+      <div class="ps5-shell">
+        <div class="ps5-top-row">
+          <button class="ps5-trigger" data-button="ps5_l2">L2</button>
+          <button class="ps5-bumper" data-button="ps5_l1">L1</button>
+          <div class="ps5-speaker">••••••</div>
+          <button class="ps5-bumper" data-button="ps5_r1">R1</button>
+          <button class="ps5-trigger" data-button="ps5_r2">R2</button>
+        </div>
+
+        <div class="ps5-left-cluster">
+          <div class="ps5-dpad dpad">
+            <button class="dpad-up" data-button="ps5_dpad_up" aria-label="Cima"></button>
+            <button class="dpad-left" data-button="ps5_dpad_left" aria-label="Esquerda"></button>
+            <div class="dpad-center"></div>
+            <button class="dpad-right" data-button="ps5_dpad_right" aria-label="Direita"></button>
+            <button class="dpad-down" data-button="ps5_dpad_down" aria-label="Baixo"></button>
+          </div>
+          <div class="stick-wrap">
+            <div class="stick" data-stick="ps5_lstick" data-click="ps5_l3">
+              <div class="stick-knob"></div>
+            </div>
+            <small>L3</small>
+          </div>
+        </div>
+
+        <div class="ps5-middle">
+          <div class="middle-actions">
+            <button class="mini" data-button="ps5_create">CREATE</button>
+            <button class="touchpad" data-button="ps5_touchpad">TOUCHPAD</button>
+            <button class="mini" data-button="ps5_options">OPTIONS</button>
+          </div>
+          <button class="home" data-button="ps5_home">⌂</button>
+        </div>
+
+        <div class="ps5-right-cluster">
+          <div class="ps5-face">
+            <button class="symbol triangle" data-button="ps5_triangle">△</button>
+            <button class="symbol square" data-button="ps5_square">□</button>
+            <button class="symbol circle" data-button="ps5_circle">○</button>
+            <button class="symbol cross" data-button="ps5_cross">×</button>
+          </div>
+          <div class="stick-wrap">
+            <div class="stick" data-stick="ps5_rstick" data-click="ps5_r3">
+              <div class="stick-knob"></div>
+            </div>
+            <small>R3</small>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="pairingOverlay" class="overlay">
+    <form id="pairingForm" class="pair-card">
+      <div class="pair-icon">🎮</div>
+      <h1>Conectar ao PC</h1>
+      <p>Digite o PIN exibido no computador e escolha qual jogador este celular controlará.</p>
+      <label class="player-label" for="playerSelect">POSIÇÃO DO JOGADOR</label>
+      <select id="playerSelect" class="player-select">
+        <option value="auto">Automático — primeiro espaço livre</option>
+        <option value="1">Jogador 1</option>
+        <option value="2">Jogador 2</option>
+      </select>
+      <input id="pinInput" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="0000" autocomplete="one-time-code" required>
+      <button type="submit">CONECTAR</button>
+      <small class="pair-hint">No primeiro celular escolha Jogador 1; no segundo, Jogador 2.</small>
+      <div id="pairMessage" class="pair-message"></div>
+    </form>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

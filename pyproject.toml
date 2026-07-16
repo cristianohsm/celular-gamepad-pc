@@ -1,0 +1,14 @@
+[project]
+name = "celular-gamepad-pc"
+version = "1.3.0"
+description = "Use one or two phones as local-network gamepads for Windows games and emulators."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Cristiano Silva" }]
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: Microsoft :: Windows :: Windows 10",
+  "Operating System :: Microsoft :: Windows :: Windows 11",
+  "Programming Language :: Python :: 3",
+]
