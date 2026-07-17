@@ -61,8 +61,12 @@ if ($firewall.Count -ne 1 -or [string]$firewall[0].Profile -ne 'Private' -or
 }
 
 $env:CELULAR_GAMEPAD_DATA_DIR = $DataDir
-$env:CELULAR_GAMEPAD_APP_DIR = $InstallDir
-$probe = & (Join-Path $InstallDir 'runtime\python.exe') -c 'import os,sys;sys.path.insert(0,os.environ["CELULAR_GAMEPAD_APP_DIR"]);import server;print(server.CONFIG_PATH);server.load_config()'
+Push-Location $InstallDir
+try {
+    $probe = & (Join-Path $InstallDir 'runtime\python.exe') -B -c "import sys;sys.path.insert(0,'.');import server;print(server.CONFIG_PATH);server.load_config()"
+} finally {
+    Pop-Location
+}
 if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath (Join-Path $DataDir 'config.json'))) { throw 'Dados em LocalAppData simulado falharam.' }
 
 $uninstaller = Join-Path $InstallDir 'unins000.exe'
