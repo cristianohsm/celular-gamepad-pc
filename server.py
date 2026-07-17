@@ -537,7 +537,7 @@ class GamepadHandler(BaseHTTPRequestHandler):
             self.send_json({
                 "ok": True,
                 "service": "celular-gamepad",
-                "version": "1.4.0-beta.1",
+                "version": "1.4.0-beta.2",
                 "active_players": PLAYER_SLOTS.active_players(),
                 "configured_output_mode": OUTPUT_COORDINATOR.configured_mode,
                 "output_mode": OUTPUT_COORDINATOR.effective_mode,
@@ -745,7 +745,7 @@ def main(argv: list[str] | None = None) -> None:
     lan_ips = find_lan_ips()
 
     print("=" * 62)
-    print(" CELULAR GAMEPAD PARA PC - v1.4.0-beta.1 | 2 JOGADORES")
+    print(" CELULAR GAMEPAD PARA PC - v1.4.0-beta.2 | 2 JOGADORES")
     print("=" * 62)
     print("Abra no celular um destes endereços:")
     for lan_ip in lan_ips:

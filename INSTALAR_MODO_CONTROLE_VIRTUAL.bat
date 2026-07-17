@@ -4,7 +4,7 @@ cd /d "%~dp0"
 title Instalar modo Controle Virtual - Experimental
 
 echo ==============================================================
-echo  MODO CONTROLE VIRTUAL - v1.4.0-beta.1 EXPERIMENTAL
+echo  MODO CONTROLE VIRTUAL - v1.4.0-beta.2 EXPERIMENTAL
 echo ==============================================================
 echo Sera instalado o componente oficial HIDMaestro v1.3.17.
 echo O Windows recebera pacotes UMDF2 e um certificado local confiavel.

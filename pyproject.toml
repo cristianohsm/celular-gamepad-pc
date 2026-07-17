@@ -1,6 +1,6 @@
 [project]
 name = "celular-gamepad-pc"
-version = "1.4.0b1"
+version = "1.4.0b2"
 description = "Use one or two phones as local-network gamepads for Windows games and emulators."
 readme = "README.md"
 requires-python = ">=3.10"

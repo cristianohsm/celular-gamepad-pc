@@ -8,7 +8,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>PhoneGamepad.Bridge</AssemblyName>
     <RootNamespace>PhoneGamepad.Bridge</RootNamespace>
-    <Version>1.4.0-beta.1</Version>
+    <Version>1.4.0-beta.2</Version>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="HIDMaestro.Core">
