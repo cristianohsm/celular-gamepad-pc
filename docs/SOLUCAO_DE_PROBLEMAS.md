@@ -23,3 +23,7 @@ O servidor voltou automaticamente ao teclado. Confirme Windows 11 build 26100+, 
 ## Somente um controle aparece
 
 Feche o jogo, confirme dois jogadores conectados, abra `joy.cpl` e pressione botões nos dois celulares. Reinicie o modo controle virtual antes de reabrir o jogo. Não altere arquivos do jogo.
+
+## O comando para após menos de um segundo
+
+Atualize para uma versão que inclua o refresh XInput de 200 ms. Enquanto houver uma entrada ativa, o celular reenvia o estado completo em baixa frequência para que o watchdog de 750 ms não neutralize um comando ainda pressionado. Ao soltar ou desconectar, a neutralização continua imediata e isolada por jogador.

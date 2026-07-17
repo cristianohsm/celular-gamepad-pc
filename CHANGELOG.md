@@ -7,6 +7,7 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 - Modo experimental e opcional com dois controles virtuais XInput via HIDMaestro fixado.
 - Bridge C# local por JSON Lines, sem nova porta de rede.
 - Analógicos e gatilhos reais, sequência, rate limit, coalescimento e watchdog.
+- Refresh do estado XInput completo a cada 200 ms enquanto houver entrada ativa, preservando comandos mantidos e a proteção do watchdog.
 - Backend falso para testes sem instalar dispositivos.
 - Modo teclado preservado como padrão e fallback.
 

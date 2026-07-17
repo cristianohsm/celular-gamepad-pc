@@ -33,9 +33,15 @@
     axes: { lx: 0, ly: 0, rx: 0, ry: 0, lt: 0, rt: 0 },
   });
   let gamepadState = makeNeutralState();
-  let gamepadSequence = 0;
-  let lastGamepadSend = 0;
-  let pendingGamepadTimer = null;
+  const gamepadTransmitter = new XInputStateTransmitter({
+    send,
+    now: () => performance.now(),
+    timestamp: () => Date.now(),
+    setTimeoutFn: (callback, delay) => window.setTimeout(callback, delay),
+    clearTimeoutFn: (timer) => window.clearTimeout(timer),
+    refreshMs: 200,
+    maxHz: 60,
+  });
 
   function setStatus(connected, message = connected ? "Conectado" : "Desconectado") {
     statusEl.classList.toggle("connected", connected);
@@ -49,24 +55,14 @@
   }
 
   function send(payload) {
-    if (!socket || socket.readyState !== WebSocket.OPEN) return;
+    if (!socket || socket.readyState !== WebSocket.OPEN) return false;
+    if (payload.type === "gamepad_state" && socket.bufferedAmount > 64 * 1024) return false;
     socket.send(JSON.stringify(payload));
+    return true;
   }
 
   function sendGamepadState(immediate = false) {
-    if (!authenticated || outputMode !== "xinput" || !assignedPlayer) return;
-    const now = performance.now();
-    const wait = Math.max(0, 1000 / 60 - (now - lastGamepadSend));
-    if (!immediate && wait > 0) {
-      if (pendingGamepadTimer === null) pendingGamepadTimer = window.setTimeout(() => {
-        pendingGamepadTimer = null;
-        sendGamepadState(true);
-      }, wait);
-      return;
-    }
-    lastGamepadSend = performance.now();
-    send({ type: "gamepad_state", protocolVersion: 2, player: assignedPlayer, sequence: ++gamepadSequence,
-      timestamp: Date.now(), buttons: { ...gamepadState.buttons }, dpad: { ...gamepadState.dpad }, axes: { ...gamepadState.axes } });
+    gamepadTransmitter.update(gamepadState, immediate);
   }
 
   function setVirtualButton(button, value) {
@@ -78,15 +74,22 @@
   }
 
   function connect(pin, requestedPlayer) {
+    if (authenticated) releaseAllLocal();
+    gamepadTransmitter.deactivate(false);
+    const previousSocket = socket;
+    if (previousSocket && previousSocket.readyState <= WebSocket.OPEN) previousSocket.close();
     pairMessage.textContent = "Conectando...";
     setStatus(false, "Conectando");
-    socket = new WebSocket(wsUrl());
+    const connectingSocket = new WebSocket(wsUrl());
+    socket = connectingSocket;
 
-    socket.addEventListener("open", () => {
+    connectingSocket.addEventListener("open", () => {
+      if (socket !== connectingSocket) return;
       send({ type: "auth", pin, player: requestedPlayer });
     });
 
-    socket.addEventListener("message", (event) => {
+    connectingSocket.addEventListener("message", (event) => {
+      if (socket !== connectingSocket) return;
       let message;
       try {
         message = JSON.parse(event.data);
@@ -100,7 +103,7 @@
           assignedPlayer = Number(message.player) || null;
           outputMode = message.outputMode === "xinput" ? "xinput" : "keyboard";
           gamepadState = makeNeutralState();
-          gamepadSequence = 0;
+          gamepadTransmitter.setSession({ authenticated: true, outputMode, player: assignedPlayer });
           pairMessage.textContent = "";
           overlay.classList.add("hidden");
           const modeLabel = outputMode === "xinput" ? "Controle virtual" : "Teclado";
@@ -110,10 +113,11 @@
             localStorage.setItem("gamepadPlayerPreference", requestedPlayer);
           } catch {}
         } else {
+          gamepadTransmitter.deactivate(false);
           authenticated = false;
           pairMessage.textContent = message.message || "PIN incorreto.";
           setStatus(false);
-          socket.close();
+          connectingSocket.close();
         }
       } else if (message.type === "input_error") {
         console.error("Falha de entrada no Windows:", message.message);
@@ -124,8 +128,10 @@
       }
     });
 
-    socket.addEventListener("close", () => {
+    connectingSocket.addEventListener("close", () => {
+      if (socket !== connectingSocket) return;
       releaseAllLocal(false);
+      gamepadTransmitter.deactivate(false);
       authenticated = false;
       assignedPlayer = null;
       outputMode = "keyboard";
@@ -134,8 +140,12 @@
       pairMessage.textContent = pairMessage.textContent || "A conexão foi encerrada. Digite o PIN atual do PC.";
     });
 
-    socket.addEventListener("error", () => {
+    connectingSocket.addEventListener("error", () => {
+      if (socket !== connectingSocket) return;
+      releaseAllLocal();
+      gamepadTransmitter.deactivate(false);
       pairMessage.textContent = "Não foi possível conectar. Confira o Wi-Fi e o Firewall do Windows.";
+      connectingSocket.close();
     });
   }
 
@@ -339,6 +349,7 @@
   setupTrigger(document.querySelector('[data-button="ps5_r2"]'), "rt");
 
   window.addEventListener("blur", () => releaseAllLocal());
+  window.addEventListener("touchcancel", () => releaseAllLocal());
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) releaseAllLocal();
   });
