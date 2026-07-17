@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import argparse
 import ctypes
 import hashlib
 import json
@@ -21,8 +22,17 @@ from xinput_bridge import OutputCoordinator
 
 ROOT = Path(__file__).resolve().parent
 STATIC_DIR = ROOT / "static"
-CONFIG_PATH = ROOT / "config.json"
 WS_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+
+
+def resolve_data_dir(environ: dict[str, str] | None = None) -> Path:
+    environment = os.environ if environ is None else environ
+    configured = environment.get("CELULAR_GAMEPAD_DATA_DIR", "").strip()
+    return Path(configured).expanduser().resolve() if configured else ROOT
+
+
+DATA_DIR = resolve_data_dir()
+CONFIG_PATH = DATA_DIR / "config.json"
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "port": 8765,
@@ -147,6 +157,7 @@ def load_config(config_path: Path | None = None) -> dict[str, Any]:
     """Load a local config, creating a safe default when it is absent."""
     path = config_path or CONFIG_PATH
     if not path.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(DEFAULT_CONFIG, indent=2, ensure_ascii=False), encoding="utf-8")
         return json.loads(json.dumps(DEFAULT_CONFIG))
 
@@ -706,7 +717,27 @@ def find_lan_ips() -> list[str]:
     return result or ["127.0.0.1"]
 
 
-def main() -> None:
+def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Celular Gamepad para PC")
+    parser.add_argument(
+        "--output-mode",
+        choices=("keyboard", "xinput"),
+        help="Sobrepõe o modo configurado somente nesta execução.",
+    )
+    return parser.parse_args(argv)
+
+
+def selected_output_mode(config: dict[str, Any], override: str | None) -> str:
+    if override in {"keyboard", "xinput"}:
+        return override
+    configured = str(config.get("output_mode", "keyboard"))
+    return configured if configured in {"keyboard", "xinput"} else "keyboard"
+
+
+def main(argv: list[str] | None = None) -> None:
+    global OUTPUT_COORDINATOR
+    args = parse_arguments(argv)
+    OUTPUT_COORDINATOR = OutputCoordinator(selected_output_mode(CONFIG, args.output_mode))
     port = int(os.environ.get("GAMEPAD_PORT", CONFIG.get("port", 8765)))
     OUTPUT_COORDINATOR.start()
     server = ThreadingHTTPServer(("0.0.0.0", port), GamepadHandler)

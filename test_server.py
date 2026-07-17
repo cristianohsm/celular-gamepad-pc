@@ -43,6 +43,17 @@ class InputStructureTests(unittest.TestCase):
 
 
 class ConfigTests(unittest.TestCase):
+    def test_data_dir_defaults_to_portable_project_root(self) -> None:
+        self.assertEqual(server.resolve_data_dir({}), server.ROOT)
+
+    def test_data_dir_uses_explicit_local_app_data_location(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            expected = Path(directory).resolve()
+            self.assertEqual(
+                server.resolve_data_dir({"CELULAR_GAMEPAD_DATA_DIR": directory}),
+                expected,
+            )
+
     def test_powershell_utf8_bom_config_is_accepted(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "config.json"
@@ -52,7 +63,7 @@ class ConfigTests(unittest.TestCase):
 
     def test_missing_config_is_created_from_safe_defaults(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "config.json"
+            path = Path(directory) / "nested" / "config.json"
             config = server.load_config(path)
             saved = json.loads(path.read_text(encoding="utf-8"))
             self.assertEqual(config, server.DEFAULT_CONFIG)
@@ -70,6 +81,19 @@ class ConfigTests(unittest.TestCase):
             self.assertEqual(config["players"]["1"]["snes_a"], "P")
             self.assertEqual(config["players"]["2"]["snes_a"], "N")
             self.assertEqual(config["output_mode"], "keyboard")
+
+    def test_command_line_mode_overrides_config_without_rewriting_it(self) -> None:
+        config = {"output_mode": "keyboard"}
+        self.assertEqual(server.selected_output_mode(config, "xinput"), "xinput")
+        self.assertEqual(config["output_mode"], "keyboard")
+
+    def test_command_line_keyboard_and_xinput_arguments(self) -> None:
+        self.assertEqual(server.parse_arguments(["--output-mode", "keyboard"]).output_mode, "keyboard")
+        self.assertEqual(server.parse_arguments(["--output-mode", "xinput"]).output_mode, "xinput")
+
+    def test_invalid_command_line_mode_is_rejected(self) -> None:
+        with self.assertRaises(SystemExit):
+            server.parse_arguments(["--output-mode", "invalid"])
 
     def test_xinput_config_is_bounded(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
