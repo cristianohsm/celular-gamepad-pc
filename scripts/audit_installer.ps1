@@ -16,6 +16,8 @@ function Assert([bool]$Condition, [string]$Message) {
 }
 
 Assert (Test-Path -LiteralPath (Join-Path $StagingPath 'runtime\python.exe')) 'Runtime Python ausente no staging.'
+$pthFiles = @(Get-ChildItem -LiteralPath (Join-Path $StagingPath 'runtime') -Filter 'python*._pth' -File)
+Assert ($pthFiles.Count -eq 1 -and '..' -in @(Get-Content -LiteralPath $pthFiles[0].FullName)) 'Runtime Python não inclui a raiz da aplicação no _pth.'
 Assert (Test-Path -LiteralPath (Join-Path $StagingPath 'bridge\PhoneGamepad.Bridge.exe')) 'Bridge self-contained ausente no staging.'
 Assert (Test-Path -LiteralPath (Join-Path $StagingPath 'bridge\coreclr.dll')) 'Runtime .NET self-contained ausente.'
 Assert ((Get-FileHash -Algorithm SHA256 -LiteralPath (Join-Path $StagingPath 'bridge\HIDMaestro.Core.dll')).Hash.ToLowerInvariant() -eq $Lock.hidmaestro.coreDllSha256) 'HIDMaestro.Core.dll não corresponde ao lock.'
@@ -46,6 +48,8 @@ Assert ($firewallAdd.Count -eq 1) 'Regra de firewall deve ser única.'
 Assert ($firewallAdd -match 'profile=private') 'Firewall não está restrito a Private.'
 Assert ($firewallAdd -notmatch 'profile=(public|domain|any)') 'Firewall liberou perfil proibido.'
 Assert ($Iss -match 'HIDMaestro pode ser utilizado por outros programas e será preservado') 'Política de preservação do HIDMaestro ausente.'
+$uninstallCleanup = Get-Content -Raw -LiteralPath (Join-Path $StagingPath 'scripts\uninstall_cleanup.ps1')
+Assert ($uninstallCleanup -notmatch '--cleanup|remove_hidmaestro\.ps1') 'Desinstalação padrão pode remover HIDMaestro.'
 
 $shortcutTargets = @('launch_emulators.cmd', 'launch_xinput.cmd', 'test_controllers.cmd', 'verify_installation.cmd')
 foreach ($target in $shortcutTargets) {

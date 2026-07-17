@@ -96,6 +96,10 @@ Copy-Item -LiteralPath (Join-Path $Root '.dependencies\hidmaestro\LICENSE') `
 $runtime = Join-Path $AppStaging 'runtime'
 Expand-Archive -LiteralPath $pythonZip -DestinationPath $runtime
 if (-not (Test-Path -LiteralPath (Join-Path $runtime 'python.exe'))) { throw 'Runtime Python não foi extraído.' }
+$pthFiles = @(Get-ChildItem -LiteralPath $runtime -Filter 'python*._pth' -File)
+if ($pthFiles.Count -ne 1) { throw 'Arquivo _pth do Python embeddable ausente ou ambíguo.' }
+$pthLines = @(Get-Content -LiteralPath $pthFiles[0].FullName)
+if ('..' -notin $pthLines) { Add-Content -LiteralPath $pthFiles[0].FullName -Encoding ASCII -Value '..' }
 
 $appFiles = @(
     'server.py', 'gamepad_protocol.py', 'xinput_bridge.py', 'config.example.json',
