@@ -51,8 +51,14 @@ foreach ($relative in @('runtime\python.exe', 'server.py', 'scripts\launch_emula
 }
 if (Get-ChildItem -LiteralPath (Join-Path $InstallDir 'bridge') -File -Recurse -ErrorAction SilentlyContinue) { throw 'Instalação Somente Emuladores incluiu arquivos da bridge.' }
 
-$firewall = netsh advfirewall firewall show rule name="Celular Gamepad — Rede Local"
-if ($LASTEXITCODE -ne 0 -or $firewall -notmatch '8765' -or $firewall -notmatch '(?i)Private') { throw 'Regra de firewall Private/TCP 8765 não foi criada.' }
+$firewall = @(Get-NetFirewallRule -DisplayName 'Celular Gamepad — Rede Local' -ErrorAction SilentlyContinue)
+$portFilter = @($firewall | Get-NetFirewallPortFilter)
+if ($firewall.Count -ne 1 -or [string]$firewall[0].Profile -ne 'Private' -or
+    [string]$firewall[0].Direction -ne 'Inbound' -or [string]$firewall[0].Enabled -ne 'True' -or
+    $portFilter.Count -ne 1 -or [string]$portFilter[0].Protocol -ne 'TCP' -or
+    [string]$portFilter[0].LocalPort -ne '8765') {
+    throw 'Regra de firewall Private/TCP 8765 não foi criada.'
+}
 
 $env:CELULAR_GAMEPAD_DATA_DIR = $DataDir
 $env:CELULAR_GAMEPAD_APP_DIR = $InstallDir
@@ -65,8 +71,9 @@ if (-not (Test-Path -LiteralPath $uninstaller)) { throw 'Desinstalador ausente.'
 if ($LASTEXITCODE -ne 0) { throw "Desinstalação de teste falhou: $LASTEXITCODE" }
 if (Test-Path -LiteralPath $InstallDir) { throw 'Desinstalação não removeu a pasta da aplicação.' }
 if (-not (Test-Path -LiteralPath (Join-Path $DataDir 'config.json'))) { throw 'Desinstalação removeu configuração do usuário.' }
-netsh advfirewall firewall show rule name="Celular Gamepad — Rede Local" *> $null
-if ($LASTEXITCODE -eq 0) { throw 'Desinstalação deixou a regra de firewall.' }
+if (Get-NetFirewallRule -DisplayName 'Celular Gamepad — Rede Local' -ErrorAction SilentlyContinue) {
+    throw 'Desinstalação deixou a regra de firewall.'
+}
 $driversAfter = @(& pnputil.exe /enum-drivers | Select-String -SimpleMatch 'HIDMaestro').Count
 if ($driversAfter -ne $driversBefore) { throw 'Teste alterou a instalação HIDMaestro existente.' }
 
