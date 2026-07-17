@@ -5,6 +5,8 @@
   const pairingForm = document.getElementById("pairingForm");
   const pinInput = document.getElementById("pinInput");
   const playerSelect = document.getElementById("playerSelect");
+  const pairTitle = document.getElementById("pairTitle");
+  const pairDescription = document.getElementById("pairDescription");
   const pairMessage = document.getElementById("pairMessage");
   const statusEl = document.getElementById("status");
   const tabs = [...document.querySelectorAll(".tab")];
@@ -108,10 +110,6 @@
           overlay.classList.add("hidden");
           const modeLabel = outputMode === "xinput" ? "Controle virtual" : "Teclado";
           setStatus(true, assignedPlayer ? `Jogador ${assignedPlayer} · ${modeLabel}` : modeLabel);
-          try {
-            localStorage.setItem("gamepadPin", pin);
-            localStorage.setItem("gamepadPlayerPreference", requestedPlayer);
-          } catch {}
         } else {
           gamepadTransmitter.deactivate(false);
           authenticated = false;
@@ -151,24 +149,26 @@
 
   pairingForm.addEventListener("submit", (event) => {
     event.preventDefault();
-    const pin = pinInput.value.replace(/\D/g, "").slice(0, 4);
-    if (pin.length !== 4) {
-      pairMessage.textContent = "Digite os quatro números do PIN.";
+    const pin = pinInput.value.replace(/\D/g, "").slice(0, 6);
+    if (pin.length !== 6) {
+      pairMessage.textContent = "Digite os seis números do PIN.";
       return;
     }
     connect(pin, playerSelect.value);
   });
 
   pinInput.addEventListener("input", () => {
-    pinInput.value = pinInput.value.replace(/\D/g, "").slice(0, 4);
+    pinInput.value = pinInput.value.replace(/\D/g, "").slice(0, 6);
   });
 
-  try {
-    const savedPin = localStorage.getItem("gamepadPin");
-    const savedPlayer = localStorage.getItem("gamepadPlayerPreference");
-    if (savedPin && /^\d{4}$/.test(savedPin)) pinInput.value = savedPin;
-    if (["auto", "1", "2"].includes(savedPlayer)) playerSelect.value = savedPlayer;
-  } catch {}
+  const pairingFromUrl = window.__celularPairing;
+  if (pairingFromUrl?.pin) {
+    pinInput.value = pairingFromUrl.pin;
+    playerSelect.value = pairingFromUrl.player;
+    pairTitle.textContent = "Conectando ao Celular Gamepad";
+    pairDescription.textContent = "Confirme o jogador e toque em Conectar. O PIN temporário foi preenchido apenas para esta sessão.";
+    pairMessage.textContent = pairingFromUrl.player === "auto" ? "Jogador automático selecionado." : `Jogador ${pairingFromUrl.player} selecionado.`;
+  }
 
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {

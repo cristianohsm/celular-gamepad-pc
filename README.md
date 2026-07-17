@@ -4,13 +4,13 @@
 
 Transforme um ou dois celulares em controles para jogos e emuladores no Windows usando o navegador e a rede local. O servidor Python converte os comandos dos celulares em teclas por meio do Win32 `SendInput`.
 
-> A prerelease experimental `1.4.0-beta.2` adiciona instalador Windows, pacote portátil e um modo opcional de dois controles virtuais XInput. O modo teclado da v1.3 continua disponível para emuladores.
+> A prerelease experimental `1.4.0-beta.3` adiciona conexão local por QR Code, instalador Windows, pacote portátil e um modo opcional de dois controles virtuais XInput. O modo teclado da v1.3 continua disponível para emuladores.
 
 ## Destaques
 
 - Um ou dois celulares, com Jogador 1 e Jogador 2 independentes.
 - Uso direto no navegador, sem instalar aplicativo no celular.
-- Comunicação WebSocket na rede local e PIN temporário a cada execução.
+- Comunicação WebSocket na rede local, PIN temporário por execução e QR Code gerado sem internet.
 - Layouts **Retro 16-bit** e **Modern Dual-Stick**.
 - Runtime Python portátil, baixado do Python.org no primeiro preparo.
 - Funciona offline depois desse preparo.
@@ -23,20 +23,24 @@ Transforme um ou dois celulares em controles para jogos e emuladores no Windows 
 - Navegador moderno no celular.
 - Internet somente para baixar o runtime na primeira utilização, se ele ainda não existir.
 
+## Conexão rápida por QR
+
+O terminal mostra um QR de conexão automática e abre, por padrão, uma única página local no PC com QRs automático, Jogador 1 e Jogador 2. Escaneie, confirme o jogador e toque em **Conectar**; o PIN temporário de seis dígitos é preenchido somente na memória e removido da URL do celular. Não há CDN, analytics ou serviço externo. Veja [conexão QR](docs/CONEXAO_QR.md).
+
 ## Início rápido
 
 1. Extraia a pasta completa; não execute dentro do ZIP.
 2. Execute `LIBERAR_FIREWALL_PRIMEIRO_USO.bat` e aceite a elevação do Windows.
 3. Execute `INICIAR_EM_QUALQUER_PC.bat`.
-4. Abra nos celulares um dos endereços mostrados no PC.
-5. Digite o PIN temporário exibido no terminal.
-6. Escolha **Jogador 1** no primeiro celular e **Jogador 2** no segundo (ou use a seleção automática).
+4. Escaneie o QR automático no terminal ou use a página local de QR do PC.
+5. Confirme o jogador e toque em **Conectar**.
+6. Para slots fixos, use os QRs Jogador 1 e Jogador 2; um slot ocupado não desconecta o outro celular.
 
 O `iniciar.bat` prefere `runtime\python.exe`, usa `py` ou `python` instalado como alternativa e chama o iniciador portátil caso nenhum Python esteja disponível.
 
 ### Instalador beta para Windows
 
-A prerelease `1.4.0-beta.2` fornece um instalador único com Python embeddable e bridge .NET self-contained. Ele cria atalhos separados para **Emuladores — Teclado** e **Jogos de PC — Controle virtual**. Veja [Instalação no Windows](docs/INSTALACAO_WINDOWS.md), [teste em outro PC](docs/TESTE_EM_OUTRO_PC.md), [SmartScreen](docs/SMARTSCREEN.md) e [desinstalação](docs/DESINSTALACAO.md).
+A prerelease `1.4.0-beta.3` fornece um instalador único com Python embeddable e bridge .NET self-contained. Ele cria atalhos separados para **Emuladores — Teclado** e **Jogos de PC — Controle virtual**. Veja [conexão QR](docs/CONEXAO_QR.md), [Instalação no Windows](docs/INSTALACAO_WINDOWS.md), [teste em outro PC](docs/TESTE_EM_OUTRO_PC.md), [SmartScreen](docs/SMARTSCREEN.md) e [desinstalação](docs/DESINSTALACAO.md).
 
 O GitHub público `cristianohsm/celular-gamepad-pc` é a fonte oficial. Verifique o SHA-256 e não baixe o instalador de terceiros.
 

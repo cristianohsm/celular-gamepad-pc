@@ -19,9 +19,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Compile
-        run: python -m py_compile server.py test_server.py test_browser_state.py test_packaging.py gamepad_protocol.py xinput_bridge.py
+        run: python -m py_compile server.py qr_connection.py test_server.py test_qr_connection.py test_browser_state.py test_packaging.py gamepad_protocol.py xinput_bridge.py
       - name: Browser held-input tests
         run: node tests/held-input-refresh.test.js
+      - name: Browser QR pairing tests
+        run: node tests/qr-pairing.test.js
       - name: Unit tests
         env:
           GAMEPAD_TEST_MODE: "1"

@@ -11,13 +11,16 @@ import socket
 import struct
 import threading
 import time
+import webbrowser
 from ctypes import wintypes
+from html import escape
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
 from gamepad_protocol import MAX_WEBSOCKET_PAYLOAD, ProtocolError, validate_gamepad_state
+from qr_connection import LanAddress, build_pairing_url, discover_lan_addresses, redact_pin, render_qr_svg, render_terminal_qr
 from xinput_bridge import OutputCoordinator
 
 ROOT = Path(__file__).resolve().parent
@@ -37,6 +40,12 @@ CONFIG_PATH = DATA_DIR / "config.json"
 DEFAULT_CONFIG: dict[str, Any] = {
     "port": 8765,
     "output_mode": "keyboard",
+    "connection_ui": {
+        "show_terminal_qr": True,
+        "open_local_qr_page": True,
+        "show_player_specific_qr": True,
+        "manual_ipv4": "",
+    },
     "xinput": {
         "dead_zone": 0.12,
         "smoothing": 0.15,
@@ -174,6 +183,14 @@ def load_config(config_path: Path | None = None) -> dict[str, Any]:
         merged["port"] = user_config["port"]
     if user_config.get("output_mode") in {"keyboard", "xinput"}:
         merged["output_mode"] = user_config["output_mode"]
+    connection_ui = user_config.get("connection_ui")
+    if isinstance(connection_ui, dict):
+        for field in ("show_terminal_qr", "open_local_qr_page", "show_player_specific_qr"):
+            if isinstance(connection_ui.get(field), bool):
+                merged["connection_ui"][field] = connection_ui[field]
+        manual_ipv4 = connection_ui.get("manual_ipv4")
+        if isinstance(manual_ipv4, str):
+            merged["connection_ui"]["manual_ipv4"] = manual_ipv4.strip()
     xinput = user_config.get("xinput")
     if isinstance(xinput, dict):
         for field, minimum, maximum in (
@@ -440,10 +457,13 @@ class PlayerSlots:
 
 
 CONFIG = load_config()
-PAIRING_PIN = f"{secrets.randbelow(10000):04d}"
+# A credencial existe somente na memória deste processo e é invalidada ao sair.
+PAIRING_PIN = f"{secrets.randbelow(1_000_000):06d}"
 INPUT_MANAGER = InputManager({int(player): bindings for player, bindings in CONFIG["players"].items()})
 PLAYER_SLOTS = PlayerSlots()
 OUTPUT_COORDINATOR = OutputCoordinator(str(CONFIG.get("output_mode", "keyboard")))
+LAN_ADDRESSES: list[LanAddress] = []
+ACTIVE_PORT = int(CONFIG.get("port", 8765))
 
 
 def websocket_send(sock: socket.socket, payload: dict[str, Any], opcode: int = 0x1) -> None:
@@ -513,8 +533,28 @@ def decode_client_message(payload: bytes) -> dict[str, Any] | None:
     return message if isinstance(message, dict) else None
 
 
+def connection_page_html(addresses: list[LanAddress], port: int, pin: str, mode: str, show_specific: bool = True) -> str:
+    """Build the PC-only QR dashboard without files, CDNs, or persistent secrets."""
+    cards: list[str] = []
+    labels = (("auto", "Conexão automática"), ("1", "Jogador 1"), ("2", "Jogador 2")) if show_specific else (("auto", "Conexão automática"),)
+    for address_index, address in enumerate(addresses):
+        for player, label in labels:
+            if address_index and player != "auto":
+                continue
+            url = build_pairing_url(address.ip, port, pin, player)
+            cards.append(
+                '<article><h2>' + escape(label) + '</h2><div class="qr">' + render_qr_svg(url) +
+                '</div><p>' + escape(address.interface) + ': ' + escape(address.ip) + '</p></article>'
+            )
+    return """<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>Conexão rápida — Celular Gamepad</title><style>body{font:16px system-ui,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem;background:#111827;color:#f8fafc}header{border-bottom:1px solid #334155}main{display:flex;gap:1rem;flex-wrap:wrap}article{background:#1e293b;padding:1rem;border-radius:12px;flex:1;min-width:240px}.qr{background:white;padding:12px;border-radius:8px}.qr svg{display:block;width:100%;height:auto}code{color:#fde68a}small{color:#cbd5e1}</style></head><body><header><h1>Celular Gamepad para PC</h1><p>Modo: """ + escape(mode) + """ · Status: pronto · Jogadores conectados: <span id="players">0</span>/2</p><p>Abra a câmera do celular e escaneie um QR Code. PIN desta sessão: <code>""" + escape(pin) + """</code></p><small>Os QRs e o PIN são locais, temporários e desaparecem ao encerrar o servidor.</small></header><main>""" + "".join(cards) + """</main><script>async function update(){try{const r=await fetch('/status',{cache:'no-store'}),s=await r.json();document.querySelector('#players').textContent=s.active_players.length}catch{}}update();setInterval(update,1500)</script></body></html>"""
+
+
+def is_local_client(address: str) -> bool:
+    return address in {"127.0.0.1", "::1"}
+
+
 class GamepadHandler(BaseHTTPRequestHandler):
-    server_version = "CelularGamepad/1.3"
+    server_version = "CelularGamepad/1.4"
 
     MIME_TYPES = {
         ".html": "text/html; charset=utf-8",
@@ -526,7 +566,7 @@ class GamepadHandler(BaseHTTPRequestHandler):
     }
 
     def log_message(self, fmt: str, *args: Any) -> None:
-        print(f"[{self.log_date_time_string()}] {self.client_address[0]} - {fmt % args}")
+        print(f"[{self.log_date_time_string()}] {self.client_address[0]} - {redact_pin(fmt % args)}")
 
     def do_GET(self) -> None:  # noqa: N802
         if self.path == "/ws" and self.headers.get("Upgrade", "").lower() == "websocket":
@@ -537,13 +577,32 @@ class GamepadHandler(BaseHTTPRequestHandler):
             self.send_json({
                 "ok": True,
                 "service": "celular-gamepad",
-                "version": "1.4.0-beta.2",
+                "version": "1.4.0-beta.3",
                 "active_players": PLAYER_SLOTS.active_players(),
                 "configured_output_mode": OUTPUT_COORDINATOR.configured_mode,
                 "output_mode": OUTPUT_COORDINATOR.effective_mode,
                 "virtual_controller_ready": OUTPUT_COORDINATOR.effective_mode == "xinput",
                 "time": int(time.time()),
             })
+            return
+
+        if self.path.split("?", 1)[0] == "/connect":
+            if not is_local_client(self.client_address[0]):
+                self.send_error(HTTPStatus.FORBIDDEN, "Página de QR disponível somente no PC local")
+                return
+            page = connection_page_html(
+                LAN_ADDRESSES, ACTIVE_PORT, PAIRING_PIN, OUTPUT_COORDINATOR.effective_mode,
+                bool(CONFIG["connection_ui"].get("show_player_specific_qr", True)),
+            )
+            data = page.encode("utf-8")
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Referrer-Policy", "no-referrer")
+            self.send_header("Content-Security-Policy", "default-src 'self'; connect-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:")
+            self.end_headers()
+            self.wfile.write(data)
             return
 
         requested = "index.html" if self.path in {"/", ""} else self.path.lstrip("/").split("?", 1)[0]
@@ -557,6 +616,8 @@ class GamepadHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", self.MIME_TYPES.get(file_path.suffix.lower(), "application/octet-stream"))
         self.send_header("Content-Length", str(len(content)))
         self.send_header("Cache-Control", "no-store")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("Content-Security-Policy", "default-src 'self'; connect-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:")
         self.end_headers()
         self.wfile.write(content)
 
@@ -566,6 +627,7 @@ class GamepadHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
         self.send_header("Cache-Control", "no-store")
+        self.send_header("Referrer-Policy", "no-referrer")
         self.end_headers()
         self.wfile.write(data)
 
@@ -610,7 +672,7 @@ class GamepadHandler(BaseHTTPRequestHandler):
                 message_type = message.get("type")
                 if not authenticated:
                     if message_type != "auth" or str(message.get("pin", "")) != PAIRING_PIN:
-                        websocket_send(self.connection, {"type": "auth", "ok": False, "message": "PIN incorreto"})
+                        websocket_send(self.connection, {"type": "auth", "ok": False, "message": "PIN inválido ou expirado"})
                         continue
 
                     requested_player = message.get("player", "auto")
@@ -687,34 +749,9 @@ class GamepadHandler(BaseHTTPRequestHandler):
                 print(f"Jogador {player_label} desconectado: {self.client_address[0]} ({client_id})")
 
 
-def find_lan_ips() -> list[str]:
-    """Retorna endereços IPv4 locais úteis, evitando loopback e duplicados."""
-    candidates: list[str] = []
-
-    # A rota padrão costuma indicar o endereço certo mesmo sem acesso real
-    # à internet; nenhum pacote precisa ser enviado.
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        sock.connect(("8.8.8.8", 80))
-        candidates.append(sock.getsockname()[0])
-    except OSError:
-        pass
-    finally:
-        sock.close()
-
-    try:
-        for item in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
-            candidates.append(item[4][0])
-    except OSError:
-        pass
-
-    result: list[str] = []
-    for ip in candidates:
-        if ip.startswith("127.") or ip == "0.0.0.0":
-            continue
-        if ip not in result:
-            result.append(ip)
-    return result or ["127.0.0.1"]
+def find_lan_ips(manual_ip: str = "") -> list[str]:
+    """Compatibility wrapper for the local, RFC1918-only adapter discovery."""
+    return [address.ip for address in discover_lan_addresses(manual_ip)]
 
 
 def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
@@ -735,29 +772,47 @@ def selected_output_mode(config: dict[str, Any], override: str | None) -> str:
 
 
 def main(argv: list[str] | None = None) -> None:
-    global OUTPUT_COORDINATOR
+    global ACTIVE_PORT, LAN_ADDRESSES, OUTPUT_COORDINATOR
     args = parse_arguments(argv)
     OUTPUT_COORDINATOR = OutputCoordinator(selected_output_mode(CONFIG, args.output_mode))
     port = int(os.environ.get("GAMEPAD_PORT", CONFIG.get("port", 8765)))
+    ACTIVE_PORT = port
     OUTPUT_COORDINATOR.start()
     server = ThreadingHTTPServer(("0.0.0.0", port), GamepadHandler)
     server.daemon_threads = True
-    lan_ips = find_lan_ips()
+    connection_ui = CONFIG["connection_ui"]
+    LAN_ADDRESSES = discover_lan_addresses(str(connection_ui.get("manual_ipv4", "")))
+    mode_label = "Jogos de PC (XInput)" if OUTPUT_COORDINATOR.effective_mode == "xinput" else "Emuladores (teclado)"
 
     print("=" * 62)
-    print(" CELULAR GAMEPAD PARA PC - v1.4.0-beta.2 | 2 JOGADORES")
+    print(" Celular Gamepad para PC")
     print("=" * 62)
-    print("Abra no celular um destes endereços:")
-    for lan_ip in lan_ips:
-        print(f"  http://{lan_ip}:{port}")
-    print(f"PIN de conexão: {PAIRING_PIN}")
-    print("Dois celulares podem conectar: escolha Jogador 1 e Jogador 2 em cada tela.")
-    if OUTPUT_COORDINATOR.effective_mode == "xinput":
-        print("Saída: Controle virtual / Jogos de PC (experimental)")
-    elif OUTPUT_COORDINATOR.configured_mode == "xinput":
-        print("Controle virtual não instalado ou indisponível; usando Teclado / Emuladores.")
+    print(f"Modo: {mode_label}")
+    print("Status: pronto")
+    if LAN_ADDRESSES:
+        primary = LAN_ADDRESSES[0]
+        print(f"Rede: {primary.interface}")
+        print(f"Endereço: http://{primary.ip}:{port}")
+        if len(LAN_ADDRESSES) > 1:
+            print("Alternativas: " + ", ".join(address.ip for address in LAN_ADDRESSES[1:]))
+        print(f"PIN: {PAIRING_PIN}")
+        print("Jogadores conectados: 0/2")
+        automatic_url = build_pairing_url(primary.ip, port, PAIRING_PIN, "auto")
+        if connection_ui.get("show_terminal_qr", True):
+            print("\nConexão rápida (automática):")
+            for line in render_terminal_qr(automatic_url):
+                print(line)
+        print("Abra a câmera do celular e escaneie o QR Code.")
+        print(f"Como alternativa, digite no navegador: http://{primary.ip}:{port}")
+        if connection_ui.get("show_player_specific_qr", True):
+            print("A página local mostra QR automático, Jogador 1 e Jogador 2.")
     else:
-        print("Saída: Teclado / Emuladores")
+        print("AVISO: nenhum IPv4 privado ativo foi encontrado.")
+        print("Conecte-se a uma rede privada ou configure connection_ui.manual_ipv4 com um IPv4 privado.")
+    if connection_ui.get("open_local_qr_page", True) and LAN_ADDRESSES:
+        local_page = f"http://127.0.0.1:{port}/connect"
+        print("Abrindo a página local de QR no navegador do PC.")
+        threading.Timer(0.5, lambda: webbrowser.open(local_page, new=1, autoraise=True)).start()
     if os.name == "nt":
         print(f"Entrada Win32: OK | INPUT={ctypes.sizeof(INPUT)} bytes | {ctypes.sizeof(ctypes.c_void_p) * 8} bits")
     print("Deixe o celular e o PC na mesma rede Wi-Fi.")

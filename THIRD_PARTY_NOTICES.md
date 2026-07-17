@@ -33,3 +33,12 @@ The official release asset is pinned by size and SHA-256 in `dependencies.lock.j
 - Version used to compile: `6.7.1`
 - License: Inno Setup License
 - Use: build-time compiler only. The Inno Setup installer itself is not redistributed inside this repository or application.
+
+## QR Code generator library (Python)
+
+- Official project: <https://github.com/nayuki/QR-Code-generator>
+- Version/tag: `v1.8.0`
+- License: MIT
+- Use: generates QR matrices locally in memory for the terminal and the PC-only `/connect` page. It makes no HTTP request and writes no QR image to disk.
+- Redistributed files: `vendor/qrcodegen.py` and `vendor/LICENSE-qrcodegen.txt`
+- Source SHA-256: `b089855caf16185c61421ea4927c1b213cf9468940d71fa8ab11ef83662dcc84`

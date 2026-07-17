@@ -5,7 +5,7 @@
   #error OutputDir must be supplied by build_installer.ps1
 #endif
 
-#define AppVersion "1.4.0-beta.2"
+#define AppVersion "1.4.0-beta.3"
 #define AppGuid "{8C41B45B-1E31-4B85-93F8-E829A1A2DC42}"
 
 [Setup]
@@ -33,7 +33,7 @@ CloseApplications=yes
 RestartApplications=no
 UsedUserAreasWarning=no
 UninstallDisplayName=Celular Gamepad para PC
-VersionInfoVersion=1.4.0.2
+VersionInfoVersion=1.4.0.3
 VersionInfoDescription=Celular Gamepad para PC - instalador experimental
 VersionInfoCompany=Celular Gamepad Project
 VersionInfoCopyright=Copyright (c) 2026 Celular Gamepad contributors
@@ -96,7 +96,7 @@ end;
 function InitializeSetup(): Boolean;
 begin
   Result := True;
-  if InstalledBetaNumber() > 2 then
+  if InstalledBetaNumber() > 3 then
   begin
     MsgBox('Uma beta mais recente já está instalada. O downgrade silencioso foi bloqueado.', mbError, MB_OK);
     Result := False;

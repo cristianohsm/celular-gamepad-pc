@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0-beta.3] - 2026-07-17
+
+- Conexão rápida por QR Code local para automático, Jogador 1 e Jogador 2.
+- PIN temporário de seis dígitos por execução, sem persistência em navegador, configuração, logs ou artefatos.
+- Detecção offline de IPv4 privado e página local `/connect` com QRs grandes e status.
+- Preenchimento do QR com confirmação explícita, remoção do PIN da URL e recusa clara de slot ocupado.
+- Gerador QR Python MIT vendorizado e auditado, sem `pip`, CDN ou chamada externa em execução.
+
 Todas as mudanças relevantes deste projeto serão registradas aqui.
 
 ## [1.4.0-beta.2] - 2026-07-16

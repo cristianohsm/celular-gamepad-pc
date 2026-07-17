@@ -6,7 +6,10 @@
   <meta name="theme-color" content="#101116">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="referrer" content="no-referrer">
   <title>Celular Gamepad</title>
+  <script src="/pairing_params.js"></script>
+  <script>window.__celularPairing = window.CelularPairing.consumePairingParameters(window);</script>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -112,15 +115,15 @@
   <div id="pairingOverlay" class="overlay">
     <form id="pairingForm" class="pair-card">
       <div class="pair-icon">🎮</div>
-      <h1>Conectar ao PC</h1>
-      <p>Digite o PIN exibido no computador e escolha qual jogador este celular controlará.</p>
+      <h1 id="pairTitle">Conectar ao PC</h1>
+      <p id="pairDescription">Digite o PIN exibido no computador e escolha qual jogador este celular controlará.</p>
       <label class="player-label" for="playerSelect">POSIÇÃO DO JOGADOR</label>
       <select id="playerSelect" class="player-select">
         <option value="auto">Automático — primeiro espaço livre</option>
         <option value="1">Jogador 1</option>
         <option value="2">Jogador 2</option>
       </select>
-      <input id="pinInput" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="0000" autocomplete="one-time-code" required>
+      <input id="pinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="PIN de 6 números" autocomplete="off" required>
       <button type="submit">CONECTAR</button>
       <small class="pair-hint">No primeiro celular escolha Jogador 1; no segundo, Jogador 2.</small>
       <div id="pairMessage" class="pair-message"></div>

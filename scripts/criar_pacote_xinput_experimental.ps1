@@ -1,4 +1,4 @@
-param([string]$Version = '1.4.0-beta.2')
+param([string]$Version = '1.4.0-beta.3')
 
 $ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent $PSScriptRoot
@@ -36,7 +36,7 @@ New-Item -ItemType Directory -Path (Join-Path $BridgeOutput 'licenses') | Out-Nu
 Copy-Item -LiteralPath (Join-Path $Root '.dependencies\hidmaestro\LICENSE') -Destination (Join-Path $BridgeOutput 'licenses\HIDMaestro-LICENSE.txt')
 
 $files = @(
-    'server.py', 'gamepad_protocol.py', 'xinput_bridge.py', 'config.example.json',
+    'server.py', 'qr_connection.py', 'gamepad_protocol.py', 'xinput_bridge.py', 'config.example.json',
     'dependencies.lock.json', 'iniciar.bat', 'INICIAR_EM_QUALQUER_PC.bat',
     'instalar_runtime_portatil.ps1', 'liberar_firewall.bat',
     'LIBERAR_FIREWALL_PRIMEIRO_USO.bat', 'DIAGNOSTICO.bat',
@@ -53,6 +53,7 @@ foreach ($relative in $files) {
     Copy-Item -LiteralPath $source -Destination (Join-Path $Staging $relative)
 }
 Copy-Item -LiteralPath (Join-Path $Root 'static') -Destination $Staging -Recurse
+Copy-Item -LiteralPath (Join-Path $Root 'vendor') -Destination $Staging -Recurse -Exclude '__pycache__', '*.pyc'
 Copy-Item -LiteralPath (Join-Path $Root 'docs') -Destination $Staging -Recurse
 
 $forbidden = Get-ChildItem -LiteralPath $Staging -Recurse -Force | Where-Object {

@@ -21,6 +21,16 @@ class PackagingTests(unittest.TestCase):
             self.assertTrue(dependency["license"])
             self.assertRegex(dependency["verifiedAt"], r"^\d{4}-\d{2}-\d{2}$")
 
+    def test_vendored_qr_generator_is_pinned_and_not_a_runtime_download(self) -> None:
+        lock = json.loads((ROOT / "dependencies.lock.json").read_text(encoding="utf-8"))
+        qr = lock["qrcodegen"]
+        self.assertEqual(qr["version"], "1.8.0")
+        self.assertEqual(qr["license"], "MIT")
+        self.assertTrue(qr["sourceUrl"].startswith("https://raw.githubusercontent.com/nayuki/"))
+        self.assertRegex(qr["sourceSha256"], r"^[0-9a-f]{64}$")
+        self.assertTrue((ROOT / "vendor" / "qrcodegen.py").is_file())
+        self.assertTrue((ROOT / "vendor" / "LICENSE-qrcodegen.txt").is_file())
+
     def test_installer_has_fixed_app_id_and_private_firewall(self) -> None:
         script = (ROOT / "installer" / "CelularGamepad.iss").read_text(encoding="utf-8")
         self.assertIn("8C41B45B-1E31-4B85-93F8-E829A1A2DC42", script)
@@ -43,6 +53,16 @@ class PackagingTests(unittest.TestCase):
         self.assertIn("--self-contained true", script)
         self.assertIn("python.exe", script)
         self.assertIn("audit_installer.ps1", script)
+        self.assertIn("qr_connection.py", script)
+        self.assertIn("Join-Path $Root 'vendor'", script)
+
+    def test_qr_pairing_has_no_external_client_resources_or_persistent_pin(self) -> None:
+        app = (ROOT / "static" / "app.js").read_text(encoding="utf-8")
+        index = (ROOT / "static" / "index.html").read_text(encoding="utf-8")
+        self.assertNotIn("localStorage", app)
+        self.assertIn("history.replaceState", (ROOT / "static" / "pairing_params.js").read_text(encoding="utf-8"))
+        self.assertNotIn("http://", index)
+        self.assertNotIn("https://", index)
 
     def test_generated_content_is_ignored(self) -> None:
         ignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
@@ -60,6 +80,10 @@ class PackagingTests(unittest.TestCase):
         self.assertTrue((staging / "bridge" / "PhoneGamepad.Bridge.exe").is_file())
         self.assertTrue((staging / "bridge" / "coreclr.dll").is_file())
         self.assertFalse((staging / "config.json").exists())
+        # Staging pode ter sido gerado por uma beta anterior; o build atual
+        # sempre copia vendor e é validado pelo script/teste acima.
+        if (staging / "vendor").exists():
+            self.assertTrue((staging / "vendor" / "qrcodegen.py").is_file())
         for path in staging.rglob("*"):
             self.assertNotIn(path.name, {".git", ".github", "__pycache__", "config.json"})
 

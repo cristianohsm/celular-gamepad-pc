@@ -1,5 +1,5 @@
 ﻿param(
-    [string]$Version = '1.4.0-beta.2',
+    [string]$Version = '1.4.0-beta.3',
     [switch]$SkipInstaller
 )
 
@@ -102,12 +102,20 @@ $pthLines = @(Get-Content -LiteralPath $pthFiles[0].FullName)
 if ('..' -notin $pthLines) { Add-Content -LiteralPath $pthFiles[0].FullName -Encoding ASCII -Value '..' }
 
 $appFiles = @(
-    'server.py', 'gamepad_protocol.py', 'xinput_bridge.py', 'config.example.json',
+    'server.py', 'qr_connection.py', 'gamepad_protocol.py', 'xinput_bridge.py', 'config.example.json',
     'dependencies.lock.json', 'README.md', 'README.en.md', 'CHANGELOG.md',
     'LICENSE', 'SECURITY.md', 'THIRD_PARTY_NOTICES.md'
 )
 foreach ($relative in $appFiles) { Copy-AppFile $relative }
 Copy-Item -LiteralPath (Join-Path $Root 'static') -Destination $AppStaging -Recurse
+$vendorSource = Join-Path $Root 'vendor'
+$vendorDestination = Join-Path $AppStaging 'vendor'
+Get-ChildItem -LiteralPath $vendorSource -File -Recurse | Where-Object { $_.Extension -ne '.pyc' } | ForEach-Object {
+    $relative = $_.FullName.Substring($vendorSource.Length).TrimStart('\\')
+    $destination = Join-Path $vendorDestination $relative
+    New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
+    Copy-Item -LiteralPath $_.FullName -Destination $destination -Force
+}
 Copy-Item -LiteralPath (Join-Path $Root 'docs') -Destination $AppStaging -Recurse
 Copy-Item -LiteralPath (Join-Path $Root 'installer\scripts') -Destination $AppStaging -Recurse
 Copy-Item -LiteralPath (Join-Path $Root 'installer\scripts\launch_emulators.cmd') -Destination (Join-Path $AppStaging 'INICIAR_EMULADORES.bat')

@@ -38,7 +38,11 @@ foreach ($file in $textFiles) {
     Assert ($content -notmatch '(?i)C:\\Users\\') "Caminho local encontrado em $($file.FullName)."
     Assert ($content -notmatch '(?i)(gho_|github_pat_|BEGIN (RSA |OPENSSH )?PRIVATE KEY)') "Possível segredo em $($file.FullName)."
     Assert ($content -notmatch 'PIN de conexão:\s*\d{4}') "PIN operacional encontrado em $($file.FullName)."
-    Assert ($content -notmatch '(?<![0-9])192\.168\.\d{1,3}\.\d{1,3}') "IP local encontrado em $($file.FullName)."
+    # qr_connection.py contém somente faixas RFC1918 e endereços de exemplo;
+    # não são dados operacionais. Os demais textos continuam auditados.
+    if ($file.Name -ne 'qr_connection.py') {
+        Assert ($content -notmatch '(?<![0-9])192\.168\.\d{1,3}\.\d{1,3}') "IP local encontrado em $($file.FullName)."
+    }
 }
 
 Assert ($Iss -match '#define\s+AppGuid\s+"\{8C41B45B-1E31-4B85-93F8-E829A1A2DC42\}"') 'GUID fixo do aplicativo ausente.'
@@ -56,7 +60,7 @@ foreach ($target in $shortcutTargets) {
     Assert (Test-Path -LiteralPath (Join-Path $StagingPath "scripts\$target")) "Destino de atalho ausente: $target"
 }
 
-$portable = Join-Path $DistPath 'celular-gamepad-pc-v1.4.0-beta.2-portable.zip'
+$portable = Join-Path $DistPath 'celular-gamepad-pc-v1.4.0-beta.3-portable.zip'
 Assert (Test-Path -LiteralPath $portable) 'ZIP portátil ausente.'
 Assert (Test-Path -LiteralPath "$portable.sha256") 'Hash do ZIP portátil ausente.'
 $expectedPortableHash = ((Get-Content -Raw -LiteralPath "$portable.sha256") -split '\s+')[0]
@@ -65,7 +69,7 @@ $zipEntries = tar -tf $portable
 Assert (-not ($zipEntries | Where-Object { $_ -match '(^|/)(\.git|\.github|config\.json|logs|__pycache__)(/|$)' -or $_ -match '\.pyc$' })) 'ZIP portátil contém entrada proibida.'
 
 if (-not $SkipInstaller) {
-    $setup = Join-Path $DistPath 'CelularGamepad-Setup-v1.4.0-beta.2.exe'
+    $setup = Join-Path $DistPath 'CelularGamepad-Setup-v1.4.0-beta.3.exe'
     Assert (Test-Path -LiteralPath $setup) 'Instalador final ausente.'
     Assert (Test-Path -LiteralPath "$setup.sha256") 'Hash do instalador ausente.'
     $expectedSetupHash = ((Get-Content -Raw -LiteralPath "$setup.sha256") -split '\s+')[0]
