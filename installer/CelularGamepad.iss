@@ -1,4 +1,4 @@
-#ifndef StagingDir
+﻿#ifndef StagingDir
   #error StagingDir must be supplied by build_installer.ps1
 #endif
 #ifndef OutputDir

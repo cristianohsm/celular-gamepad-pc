@@ -1,4 +1,4 @@
-param([switch]$Confirmed)
+﻿param([switch]$Confirmed)
 
 $ErrorActionPreference = 'Stop'
 $DataDir = Join-Path $env:LOCALAPPDATA 'CelularGamepad'

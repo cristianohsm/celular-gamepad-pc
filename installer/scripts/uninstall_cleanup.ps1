@@ -1,4 +1,4 @@
-param([Parameter(Mandatory = $true)][string]$AppRoot)
+﻿param([Parameter(Mandatory = $true)][string]$AppRoot)
 
 $ErrorActionPreference = 'Continue'
 $resolvedRoot = [IO.Path]::GetFullPath($AppRoot).TrimEnd('\') + '\'

@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$InstallerPath,
     [string]$InstallDir,
     [string]$DataDir
@@ -24,6 +24,12 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
     exit $elevated.ExitCode
 }
 
+trap {
+    New-Item -ItemType Directory -Path $TestRoot -Force | Out-Null
+    $_ | Out-String | Set-Content -LiteralPath (Join-Path $TestRoot 'test-failure.log') -Encoding UTF8
+    exit 1
+}
+
 $resolvedTestRoot = [IO.Path]::GetFullPath($TestRoot).TrimEnd('\') + '\'
 foreach ($path in @($InstallDir, $DataDir)) {
     if (-not [IO.Path]::GetFullPath($path).StartsWith($resolvedTestRoot, [StringComparison]::OrdinalIgnoreCase)) {
@@ -43,8 +49,8 @@ $installArgs = @(
     "/DIR=$InstallDir"
     "/LOG=$installLog"
 )
-& $InstallerPath @installArgs
-if ($LASTEXITCODE -ne 0) { throw "Instalação de teste falhou: $LASTEXITCODE" }
+$install = Start-Process -FilePath $InstallerPath -ArgumentList $installArgs -Wait -PassThru
+if ($install.ExitCode -ne 0) { throw "Instalação de teste falhou: $($install.ExitCode)" }
 
 foreach ($relative in @('runtime\python.exe', 'server.py', 'scripts\launch_emulators.cmd', 'docs\INSTALACAO_WINDOWS.md')) {
     if (-not (Test-Path -LiteralPath (Join-Path $InstallDir $relative))) { throw "Arquivo instalado ausente: $relative" }
@@ -71,8 +77,9 @@ if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath (Join-Path $DataDir 'co
 
 $uninstaller = Join-Path $InstallDir 'unins000.exe'
 if (-not (Test-Path -LiteralPath $uninstaller)) { throw 'Desinstalador ausente.' }
-& $uninstaller /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
-if ($LASTEXITCODE -ne 0) { throw "Desinstalação de teste falhou: $LASTEXITCODE" }
+$uninstall = Start-Process -FilePath $uninstaller `
+    -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART') -Wait -PassThru
+if ($uninstall.ExitCode -notin @(0, -1)) { throw "Desinstalação de teste falhou: $($uninstall.ExitCode)" }
 if (Test-Path -LiteralPath $InstallDir) { throw 'Desinstalação não removeu a pasta da aplicação.' }
 if (-not (Test-Path -LiteralPath (Join-Path $DataDir 'config.json'))) { throw 'Desinstalação removeu configuração do usuário.' }
 if (Get-NetFirewallRule -DisplayName 'Celular Gamepad — Rede Local' -ErrorAction SilentlyContinue) {

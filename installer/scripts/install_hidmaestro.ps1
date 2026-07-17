@@ -1,4 +1,4 @@
-param([Parameter(Mandatory = $true)][string]$AppRoot)
+﻿param([Parameter(Mandatory = $true)][string]$AppRoot)
 
 $ErrorActionPreference = 'Stop'
 $DataDir = Join-Path $env:LOCALAPPDATA 'CelularGamepad'

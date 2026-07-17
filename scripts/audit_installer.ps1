@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$StagingPath,
     [string]$DistPath,
     [switch]$SkipInstaller
