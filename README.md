@@ -4,7 +4,7 @@
 
 Transforme um ou dois celulares em controles para jogos e emuladores no Windows usando o navegador e a rede local. O servidor Python converte os comandos dos celulares em teclas por meio do Win32 `SendInput`.
 
-> A branch experimental `1.4.0-beta.1` adiciona um modo opcional de dois controles virtuais XInput. O modo teclado da v1.3 continua sendo o padrão e o caminho recomendado para emuladores.
+> A prerelease experimental `1.4.0-beta.2` adiciona instalador Windows, pacote portátil e um modo opcional de dois controles virtuais XInput. O modo teclado da v1.3 continua disponível para emuladores.
 
 ## Destaques
 
@@ -33,6 +33,12 @@ Transforme um ou dois celulares em controles para jogos e emuladores no Windows 
 6. Escolha **Jogador 1** no primeiro celular e **Jogador 2** no segundo (ou use a seleção automática).
 
 O `iniciar.bat` prefere `runtime\python.exe`, usa `py` ou `python` instalado como alternativa e chama o iniciador portátil caso nenhum Python esteja disponível.
+
+### Instalador beta para Windows
+
+A prerelease `1.4.0-beta.2` fornece um instalador único com Python embeddable e bridge .NET self-contained. Ele cria atalhos separados para **Emuladores — Teclado** e **Jogos de PC — Controle virtual**. Veja [Instalação no Windows](docs/INSTALACAO_WINDOWS.md), [teste em outro PC](docs/TESTE_EM_OUTRO_PC.md), [SmartScreen](docs/SMARTSCREEN.md) e [desinstalação](docs/DESINSTALACAO.md).
+
+O GitHub público `cristianohsm/celular-gamepad-pc` é a fonte oficial. Verifique o SHA-256 e não baixe o instalador de terceiros.
 
 ### Iniciar com o Windows
 
@@ -119,4 +125,4 @@ Contribuições são bem-vindas; leia [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Código sob a [Licença MIT](LICENSE).
 
-Este projeto é independente e não possui vínculo, aprovação ou afiliação com Nintendo, Sony, PlayStation ou outras fabricantes. As marcas mencionadas pertencem aos respectivos proprietários.
+Este projeto é independente e não possui vínculo, aprovação ou afiliação com Nintendo, Sony, Microsoft, Xbox, PlayStation ou outras fabricantes. As marcas mencionadas pertencem aos respectivos proprietários.

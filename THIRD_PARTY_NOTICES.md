@@ -12,3 +12,24 @@
 - License copy: `bridge/licenses/HIDMaestro-LICENSE.txt`
 
 The official release asset is pinned by size and SHA-256 in `dependencies.lock.json`. HIDMaestro is an independent project and is not created, endorsed, or maintained by Celular Gamepad para PC.
+
+## Python
+
+- Official project: <https://www.python.org/>
+- Version: `3.12.10`, Windows embeddable x64 package
+- License: Python Software Foundation License Version 2
+- Use: private portable runtime bundled with the installer and portable package; pip is not installed.
+
+## .NET
+
+- Official project: <https://dotnet.microsoft.com/>
+- SDK used to publish: `10.0.301`; bundled runtime: `10.0.9`
+- License: MIT
+- Use: self-contained `win-x64` publication of the local bridge. No system-wide .NET installation is performed.
+
+## Inno Setup
+
+- Official project: <https://jrsoftware.org/isinfo.php>
+- Version used to compile: `6.7.1`
+- License: Inno Setup License
+- Use: build-time compiler only. The Inno Setup installer itself is not redistributed inside this repository or application.

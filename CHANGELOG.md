@@ -2,8 +2,12 @@
 
 Todas as mudanças relevantes deste projeto serão registradas aqui.
 
-## [1.4.0-beta.1] - Não lançado
+## [1.4.0-beta.2] - 2026-07-16
 
+- Instalador único para Windows com Python embeddable e bridge .NET self-contained.
+- Atalhos separados para Emuladores (teclado) e Jogos de PC (XInput).
+- Dados mutáveis da instalação em `%LOCALAPPDATA%\CelularGamepad`.
+- Pacote portátil completo para testes em outro computador.
 - Modo experimental e opcional com dois controles virtuais XInput via HIDMaestro fixado.
 - Bridge C# local por JSON Lines, sem nova porta de rede.
 - Analógicos e gatilhos reais, sequência, rate limit, coalescimento e watchdog.

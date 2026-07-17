@@ -1,6 +1,6 @@
 # Modo Controle virtual / Jogos de PC
 
-Status: **experimental (`1.4.0-beta.1`)**. O modo padrão continua sendo **Teclado / Emuladores**.
+Status: **experimental (`1.4.0-beta.2`)**. O modo padrão continua sendo **Teclado / Emuladores**.
 
 ## Diferenças
 

@@ -1,6 +1,6 @@
 # Decisão técnica: modo de controle virtual XInput
 
-Status: experimental — versão `1.4.0-beta.1`.
+Status: experimental — versão `1.4.0-beta.2`.
 
 ## Contexto e decisão
 
