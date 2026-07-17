@@ -22,7 +22,16 @@ public sealed class BridgeEngine : IDisposable
             return true;
         }
     }
-    public void Neutralize(int player) { lock (sync) { backend.Neutralize(player); timedOut.Add(player); } }
+    public void Neutralize(int player)
+    {
+        lock (sync)
+        {
+            backend.Neutralize(player);
+            sequences[player] = -1;
+            lastSeen.Remove(player);
+            timedOut.Add(player);
+        }
+    }
     public void Tick(DateTimeOffset now)
     {
         lock (sync)

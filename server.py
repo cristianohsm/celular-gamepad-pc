@@ -151,7 +151,7 @@ def load_config(config_path: Path | None = None) -> dict[str, Any]:
         return json.loads(json.dumps(DEFAULT_CONFIG))
 
     try:
-        user_config = json.loads(path.read_text(encoding="utf-8"))
+        user_config = json.loads(path.read_text(encoding="utf-8-sig"))
     except (OSError, json.JSONDecodeError) as exc:
         raise RuntimeError(f"Não foi possível ler config.json: {exc}") from exc
 

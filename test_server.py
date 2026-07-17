@@ -43,6 +43,13 @@ class InputStructureTests(unittest.TestCase):
 
 
 class ConfigTests(unittest.TestCase):
+    def test_powershell_utf8_bom_config_is_accepted(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "config.json"
+            path.write_text('{"output_mode":"xinput"}', encoding="utf-8-sig")
+            config = server.load_config(path)
+            self.assertEqual(config["output_mode"], "xinput")
+
     def test_missing_config_is_created_from_safe_defaults(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "config.json"
