@@ -1,0 +1,60 @@
+param(
+    [string]$InstallerPath,
+    [string]$InstallDir,
+    [string]$DataDir
+)
+
+$ErrorActionPreference = 'Stop'
+$Root = Split-Path -Parent $PSScriptRoot
+if (-not $InstallerPath) { $InstallerPath = Join-Path $Root 'dist-release\CelularGamepad-Setup-v1.4.0-beta.2.exe' }
+if (-not $InstallDir) { $InstallDir = Join-Path $Root 'installer\test-install\app' }
+if (-not $DataDir) { $DataDir = Join-Path $Root 'installer\test-install\data' }
+$TestRoot = Join-Path $Root 'installer\test-install'
+
+$resolvedTestRoot = [IO.Path]::GetFullPath($TestRoot).TrimEnd('\') + '\'
+foreach ($path in @($InstallDir, $DataDir)) {
+    if (-not [IO.Path]::GetFullPath($path).StartsWith($resolvedTestRoot, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Caminho de teste fora do escopo: $path"
+    }
+}
+if (Test-Path -LiteralPath $TestRoot) { Remove-Item -LiteralPath $TestRoot -Recurse -Force }
+New-Item -ItemType Directory -Path $TestRoot -Force | Out-Null
+
+$driversBefore = @(& pnputil.exe /enum-drivers | Select-String -SimpleMatch 'HIDMaestro').Count
+$installLog = Join-Path $TestRoot 'install.log'
+$installArgs = @(
+    '/VERYSILENT'
+    '/SUPPRESSMSGBOXES'
+    '/NORESTART'
+    '/TYPE=emulators'
+    "/DIR=$InstallDir"
+    "/LOG=$installLog"
+)
+& $InstallerPath @installArgs
+if ($LASTEXITCODE -ne 0) { throw "Instalação de teste falhou: $LASTEXITCODE" }
+
+foreach ($relative in @('runtime\python.exe', 'server.py', 'scripts\launch_emulators.cmd', 'docs\INSTALACAO_WINDOWS.md')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $InstallDir $relative))) { throw "Arquivo instalado ausente: $relative" }
+}
+if (Get-ChildItem -LiteralPath (Join-Path $InstallDir 'bridge') -File -Recurse -ErrorAction SilentlyContinue) { throw 'Instalação Somente Emuladores incluiu arquivos da bridge.' }
+
+$firewall = netsh advfirewall firewall show rule name="Celular Gamepad — Rede Local"
+if ($LASTEXITCODE -ne 0 -or $firewall -notmatch '8765' -or $firewall -notmatch '(?i)Private') { throw 'Regra de firewall Private/TCP 8765 não foi criada.' }
+
+$env:CELULAR_GAMEPAD_DATA_DIR = $DataDir
+$env:CELULAR_GAMEPAD_APP_DIR = $InstallDir
+$probe = & (Join-Path $InstallDir 'runtime\python.exe') -c 'import os,sys;sys.path.insert(0,os.environ["CELULAR_GAMEPAD_APP_DIR"]);import server;print(server.CONFIG_PATH);server.load_config()'
+if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath (Join-Path $DataDir 'config.json'))) { throw 'Dados em LocalAppData simulado falharam.' }
+
+$uninstaller = Join-Path $InstallDir 'unins000.exe'
+if (-not (Test-Path -LiteralPath $uninstaller)) { throw 'Desinstalador ausente.' }
+& $uninstaller /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
+if ($LASTEXITCODE -ne 0) { throw "Desinstalação de teste falhou: $LASTEXITCODE" }
+if (Test-Path -LiteralPath $InstallDir) { throw 'Desinstalação não removeu a pasta da aplicação.' }
+if (-not (Test-Path -LiteralPath (Join-Path $DataDir 'config.json'))) { throw 'Desinstalação removeu configuração do usuário.' }
+netsh advfirewall firewall show rule name="Celular Gamepad — Rede Local" *> $null
+if ($LASTEXITCODE -eq 0) { throw 'Desinstalação deixou a regra de firewall.' }
+$driversAfter = @(& pnputil.exe /enum-drivers | Select-String -SimpleMatch 'HIDMaestro').Count
+if ($driversAfter -ne $driversBefore) { throw 'Teste alterou a instalação HIDMaestro existente.' }
+
+Write-Host "TEST_INSTALLED_APP_PASS CONFIG=$probe HIDMAESTRO_DRIVERS=$driversAfter" -ForegroundColor Green
