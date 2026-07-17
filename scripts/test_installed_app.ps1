@@ -11,6 +11,19 @@ if (-not $InstallDir) { $InstallDir = Join-Path $Root 'installer\test-install\ap
 if (-not $DataDir) { $DataDir = Join-Path $Root 'installer\test-install\data' }
 $TestRoot = Join-Path $Root 'installer\test-install'
 
+$identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+$principal = [Security.Principal.WindowsPrincipal]::new($identity)
+if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    foreach ($value in @($PSCommandPath, $InstallerPath, $InstallDir, $DataDir)) {
+        if ($value.Contains('"')) { throw 'O teste não aceita aspas nos caminhos.' }
+    }
+    $elevatedArgs = '-NoProfile -ExecutionPolicy Bypass -File "{0}" -InstallerPath "{1}" -InstallDir "{2}" -DataDir "{3}"' -f `
+        $PSCommandPath, $InstallerPath, $InstallDir, $DataDir
+    $elevated = Start-Process -FilePath "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" `
+        -ArgumentList $elevatedArgs -Verb RunAs -Wait -PassThru
+    exit $elevated.ExitCode
+}
+
 $resolvedTestRoot = [IO.Path]::GetFullPath($TestRoot).TrimEnd('\') + '\'
 foreach ($path in @($InstallDir, $DataDir)) {
     if (-not [IO.Path]::GetFullPath($path).StartsWith($resolvedTestRoot, [StringComparison]::OrdinalIgnoreCase)) {
