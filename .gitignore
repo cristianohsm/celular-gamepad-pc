@@ -12,6 +12,17 @@ config.json
 *.bak
 *.tmp
 dist/
+dist-experimental/
+dist-release/
+installer/downloads/
+installer/output/
+installer/staging/
+installer/test-install/
+.dotnet/
+.dependencies/
+_hidmaestro_audit/
+bridge/**/bin/
+bridge/**/obj/
 .vscode/
 .idea/
 .DS_Store

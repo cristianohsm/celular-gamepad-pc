@@ -6,7 +6,10 @@
   <meta name="theme-color" content="#101116">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="referrer" content="no-referrer">
   <title>Celular Gamepad</title>
+  <script src="/pairing_params.js"></script>
+  <script>window.__celularPairing = window.CelularPairing.consumePairingParameters(window);</script>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -59,11 +62,11 @@
     <section id="ps5Layout" class="controller-view" aria-label="Layout Modern Dual-Stick">
       <div class="ps5-shell">
         <div class="ps5-top-row">
-          <button class="ps5-trigger" data-button="ps5_l2">L2</button>
-          <button class="ps5-bumper" data-button="ps5_l1">L1</button>
+          <button class="ps5-trigger" data-button="ps5_l2" aria-label="Gatilho esquerdo analógico">LT</button>
+          <button class="ps5-bumper" data-button="ps5_l1">LB</button>
           <div class="ps5-speaker">••••••</div>
-          <button class="ps5-bumper" data-button="ps5_r1">R1</button>
-          <button class="ps5-trigger" data-button="ps5_r2">R2</button>
+          <button class="ps5-bumper" data-button="ps5_r1">RB</button>
+          <button class="ps5-trigger" data-button="ps5_r2" aria-label="Gatilho direito analógico">RT</button>
         </div>
 
         <div class="ps5-left-cluster">
@@ -84,9 +87,9 @@
 
         <div class="ps5-middle">
           <div class="middle-actions">
-            <button class="mini" data-button="ps5_create">CREATE</button>
+            <button class="mini" data-button="ps5_create">VIEW</button>
             <button class="touchpad" data-button="ps5_touchpad">TOUCHPAD</button>
-            <button class="mini" data-button="ps5_options">OPTIONS</button>
+            <button class="mini" data-button="ps5_options">MENU</button>
           </div>
           <button class="home" data-button="ps5_home">⌂</button>
         </div>
@@ -112,21 +115,22 @@
   <div id="pairingOverlay" class="overlay">
     <form id="pairingForm" class="pair-card">
       <div class="pair-icon">🎮</div>
-      <h1>Conectar ao PC</h1>
-      <p>Digite o PIN exibido no computador e escolha qual jogador este celular controlará.</p>
+      <h1 id="pairTitle">Conectar ao PC</h1>
+      <p id="pairDescription">Digite o PIN exibido no computador e escolha qual jogador este celular controlará.</p>
       <label class="player-label" for="playerSelect">POSIÇÃO DO JOGADOR</label>
       <select id="playerSelect" class="player-select">
         <option value="auto">Automático — primeiro espaço livre</option>
         <option value="1">Jogador 1</option>
         <option value="2">Jogador 2</option>
       </select>
-      <input id="pinInput" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="0000" autocomplete="one-time-code" required>
+      <input id="pinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="PIN de 6 números" autocomplete="off" required>
       <button type="submit">CONECTAR</button>
       <small class="pair-hint">No primeiro celular escolha Jogador 1; no segundo, Jogador 2.</small>
       <div id="pairMessage" class="pair-message"></div>
     </form>
   </div>
 
+  <script src="/xinput_state.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

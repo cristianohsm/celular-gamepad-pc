@@ -1,5 +1,17 @@
 {
   "port": 8765,
+  "output_mode": "keyboard",
+  "connection_ui": {
+    "show_terminal_qr": true,
+    "open_local_qr_page": true,
+    "show_player_specific_qr": true,
+    "manual_ipv4": ""
+  },
+  "xinput": {
+    "dead_zone": 0.12,
+    "smoothing": 0.15,
+    "max_update_hz": 60
+  },
   "players": {
     "1": {
       "snes_up": "UP", "snes_down": "DOWN", "snes_left": "LEFT", "snes_right": "RIGHT",

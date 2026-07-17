@@ -1,0 +1,68 @@
+{
+  "hidmaestro": {
+    "name": "HIDMaestro",
+    "version": "1.3.17",
+    "driverVersion": "1.3.17.0",
+    "tag": "v1.3.17",
+    "repository": "hifihedgehog/HIDMaestro",
+    "commit": "a5fc8b77732e93d1bd8519eb081a6a4c4c9ff283",
+    "asset": "HIDMaestro-v1.3.17.zip",
+    "assetSize": 21457772,
+    "sha256": "3a3685fb3325744778198c1fbd773d0cae5902c9aedb42227812187acb9957f0",
+    "coreDllSize": 7295488,
+    "coreDllSha256": "a176bf7457d3b884b6ccc9a10da4d72d9d52df3dbf676df2c7e36ba7b7427a5c",
+    "licenseSha256": "edb0ae8061250bde3ffbda1b62ac63757fbebe452c861c47fa11faddfa506f56",
+    "license": "MIT",
+    "origin": "Official GitHub release",
+    "downloadUrl": "https://github.com/hifihedgehog/HIDMaestro/releases/download/v1.3.17/HIDMaestro-v1.3.17.zip",
+    "verifiedAt": "2026-07-16"
+  },
+  "pythonEmbeddable": {
+    "name": "Python embeddable package for Windows x64",
+    "version": "3.12.10",
+    "origin": "Python Software Foundation",
+    "downloadUrl": "https://www.python.org/ftp/python/3.12.10/python-3.12.10-embed-amd64.zip",
+    "asset": "python-3.12.10-embed-amd64.zip",
+    "assetSize": 11133606,
+    "sha256": "4acbed6dd1c744b0376e3b1cf57ce906f9dc9e95e68824584c8099a63025a3c3",
+    "license": "Python Software Foundation License Version 2",
+    "verifiedAt": "2026-07-16"
+  },
+  "dotnetSdk": {
+    "name": ".NET SDK for Windows x64",
+    "version": "10.0.301",
+    "runtimeVersion": "10.0.9",
+    "rid": "win-x64",
+    "origin": "Microsoft official .NET builds",
+    "downloadUrl": "https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.301/dotnet-sdk-10.0.301-win-x64.zip",
+    "asset": "dotnet-sdk-10.0.301-win-x64.zip",
+    "assetSize": 297403780,
+    "sha256": "65304992343d12461f4369b65a1e78a38737899a240ad42e942ada0bad4fbdec",
+    "sha512": "38456e992c4df0ff0ac9fc5f28ff09a88543c0fc4e4deedffda9c4ebaf852c4519addacf28814ea77ea42ce2d37db812fae5ba1fe25f06364ca5a6027036387f",
+    "license": "MIT",
+    "verifiedAt": "2026-07-16"
+  },
+  "innoSetup": {
+    "name": "Inno Setup",
+    "version": "6.7.1",
+    "tag": "is-6_7_1",
+    "origin": "Official jrsoftware/issrc GitHub release",
+    "downloadUrl": "https://github.com/jrsoftware/issrc/releases/download/is-6_7_1/innosetup-6.7.1.exe",
+    "asset": "innosetup-6.7.1.exe",
+    "assetSize": 10619024,
+    "sha256": "4d11e8050b6185e0d49bd9e8cc661a7a59f44959a621d31d11033124c4e8a7b0",
+    "authenticodePublisher": "Pyrsys B.V.",
+    "license": "Inno Setup License",
+    "verifiedAt": "2026-07-16"
+  },
+  "qrcodegen": {
+    "name": "QR Code generator library (Python)",
+    "version": "1.8.0",
+    "tag": "v1.8.0",
+    "origin": "Project Nayuki official GitHub repository",
+    "sourceUrl": "https://raw.githubusercontent.com/nayuki/QR-Code-generator/v1.8.0/python/qrcodegen.py",
+    "sourceSha256": "b089855caf16185c61421ea4927c1b213cf9468940d71fa8ab11ef83662dcc84",
+    "license": "MIT",
+    "verifiedAt": "2026-07-17"
+  }
+}

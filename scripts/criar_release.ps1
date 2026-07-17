@@ -1,5 +1,5 @@
 param(
-    [string]$Version = '1.3.0'
+    [string]$Version = '1.4.0-beta.3'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -10,7 +10,7 @@ $Zip = "$Staging.zip"
 $Checksum = "$Zip.sha256"
 
 $requiredFiles = @(
-    'server.py', 'config.example.json', 'iniciar.bat',
+    'server.py', 'qr_connection.py', 'config.example.json', 'iniciar.bat',
     'INICIAR_EM_QUALQUER_PC.bat', 'instalar_runtime_portatil.ps1',
     'liberar_firewall.bat', 'LIBERAR_FIREWALL_PRIMEIRO_USO.bat',
     'DIAGNOSTICO.bat', 'PREPARAR_PACOTE_OFFLINE.bat',
@@ -23,7 +23,7 @@ $documentation = @(
     'docs\SOLUCAO_DE_PROBLEMAS.md'
 )
 
-foreach ($relativePath in $requiredFiles + $documentation + @('static')) {
+foreach ($relativePath in $requiredFiles + $documentation + @('static', 'vendor')) {
     if (-not (Test-Path -LiteralPath (Join-Path $Root $relativePath))) {
         throw "Arquivo necessário ausente: $relativePath"
     }
@@ -49,6 +49,7 @@ foreach ($relativePath in $documentation) {
     Copy-Item -LiteralPath (Join-Path $Root $relativePath) -Destination (Join-Path $Staging $relativePath)
 }
 Copy-Item -LiteralPath (Join-Path $Root 'static') -Destination $Staging -Recurse
+Copy-Item -LiteralPath (Join-Path $Root 'vendor') -Destination $Staging -Recurse -Exclude '__pycache__', '*.pyc'
 
 $forbidden = Get-ChildItem -LiteralPath $Staging -Recurse -Force | Where-Object {
     $_.Name -in @('.git', '.github', 'runtime', 'config.json', '__pycache__', 'logs', 'dist') -or
